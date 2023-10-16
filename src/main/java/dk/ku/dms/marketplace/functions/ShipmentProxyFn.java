@@ -3,9 +3,9 @@ package dk.ku.dms.marketplace.functions;
 import dk.ku.dms.marketplace.common.Utils.Utils;
 import dk.ku.dms.marketplace.constants.Constants;
 import dk.ku.dms.marketplace.constants.Enums;
-import dk.ku.dms.marketplace.Types.MsgToShipment.UpdateShipment;
-import dk.ku.dms.marketplace.Types.MsgToShipmentProxy.UpdateShipments;
-import dk.ku.dms.marketplace.Types.State.ShipmentProxyState;
+import dk.ku.dms.marketplace.types.MsgToShipment.UpdateShipment;
+import dk.ku.dms.marketplace.types.MsgToShipmentProxy.UpdateShipments;
+import dk.ku.dms.marketplace.types.State.ShipmentProxyState;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 

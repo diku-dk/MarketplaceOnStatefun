@@ -4,9 +4,8 @@ import dk.ku.dms.marketplace.common.Utils.Utils;
 import dk.ku.dms.marketplace.common.Entity.Product;
 import dk.ku.dms.marketplace.constants.Constants;
 import dk.ku.dms.marketplace.constants.Enums;
-import dk.ku.dms.marketplace.Types.MsgToProdFn.UpdateSinglePrice;
-import dk.ku.dms.marketplace.Types.MsgToSeller.*;
-import dk.ku.dms.marketplace.Types.State.ProductState;
+import dk.ku.dms.marketplace.types.MsgToProdFn.UpdateSinglePrice;
+import dk.ku.dms.marketplace.types.MsgToSeller.*;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 
@@ -20,7 +19,8 @@ public class ProductFn implements StatefulFunction {
 
     static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNS_NAMESPACE, "product");
 
-    static final ValueSpec<ProductState> PRODUCTSTATE = ValueSpec.named("product").withCustomType(ProductState.TYPE);
+//    static final ValueSpec<ProductState> PRODUCTSTATE = ValueSpec.named("product").withCustomType(ProductState.TYPE);
+    static final ValueSpec<Product> PRODUCTSTATE = ValueSpec.named("product").withCustomType(Product.TYPE);
 
     //  Contains all the information needed to create a function instance
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
@@ -80,22 +80,21 @@ public class ProductFn implements StatefulFunction {
         System.out.println(log);
     }
 
-    private ProductState getProductState(Context context) {
-        return context.storage().get(PRODUCTSTATE).orElse(new ProductState());
+    private Product getProductState(Context context) {
+        return context.storage().get(PRODUCTSTATE).orElse(new Product());
     }
 
     private void onAddProduct(Context context, Message message) {
-        ProductState productState = getProductState(context);
+//        Product productState = getProductState(context);
         AddProduct addProduct = message.as(AddProduct.TYPE);
         Product product = addProduct.getProduct();
-        productState.addProduct(product);
-        context.storage().set(PRODUCTSTATE, productState);
+//        productState.addProduct(product);
+        context.storage().set(PRODUCTSTATE, product);
 
         String log = getPartionText(context.self().id())
 //                + " #sub-task# "
                 + "add product success, " + "product Id : " + product.getProduct_id() + "\n";
         printLog(log);
-//        sendTaskResToSeller(context, product, Enums.TaskType.AddProductType);
     }
 
     private void onUpdateProduct(Context context, Message message) {
@@ -106,8 +105,7 @@ public class ProductFn implements StatefulFunction {
                 + "update product [receive], " + "tid : " + updateProduct.getVersion() + "\n";
         printLog(log_);
 
-        ProductState productState = getProductState(context);
-        Product product = productState.getProduct();
+        Product product = getProductState(context);
         if (product == null) {
             String log = getPartionText(context.self().id())
                     + "update product failed as product not exist\n"
@@ -117,11 +115,11 @@ public class ProductFn implements StatefulFunction {
             logger.warning(log);
             return;
         }
-        // todo : send transaction marker
+
         product.setVersion(updateProduct.getVersion());
         product.setUpdatedAt(LocalDateTime.now());
 
-        context.storage().set(PRODUCTSTATE, productState);
+        context.storage().set(PRODUCTSTATE, product);
 
         String log = getPartionText(context.self().id())
                 + "delete product success AT PRODUCTFN\n"
@@ -143,8 +141,7 @@ public class ProductFn implements StatefulFunction {
                 + "update price [receive], " + "tid : " + updatePrice.getInstanceId() + "\n";
         printLog(log_);
 
-        ProductState productState = getProductState(context);
-        Product product = productState.getProduct();
+        Product product = getProductState(context);
 
         Enums.MarkStatus markStatus = Enums.MarkStatus.ERROR;
 //        String result = "fail";
@@ -159,7 +156,7 @@ public class ProductFn implements StatefulFunction {
             product.setUpdatedAt(LocalDateTime.now());
 //            result = "success";
             markStatus = Enums.MarkStatus.SUCCESS;
-            context.storage().set(PRODUCTSTATE, productState);
+            context.storage().set(PRODUCTSTATE, product);
 
             String log = getPartionText(context.self().id())
                     + "update product success\n"

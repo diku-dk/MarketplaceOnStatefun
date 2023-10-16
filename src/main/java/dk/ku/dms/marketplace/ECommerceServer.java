@@ -4,7 +4,7 @@ package dk.ku.dms.marketplace;
 import io.undertow.Undertow;
 import org.apache.flink.statefun.sdk.java.StatefulFunctions;
 import org.apache.flink.statefun.sdk.java.handler.RequestReplyHandler;
-
+import dk.ku.dms.marketplace.functions.*;
 
 
 public final class ECommerceServer {

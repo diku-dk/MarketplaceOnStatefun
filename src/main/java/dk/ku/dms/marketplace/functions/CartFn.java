@@ -8,8 +8,8 @@ import dk.ku.dms.marketplace.common.Entity.CustomerCheckout;
 import dk.ku.dms.marketplace.common.Utils.Utils;
 import dk.ku.dms.marketplace.common.Entity.Checkout;
 import dk.ku.dms.marketplace.constants.Constants;
-import dk.ku.dms.marketplace.Types.MsgToCartFn.*;
-import dk.ku.dms.marketplace.Types.State.CartState;
+import dk.ku.dms.marketplace.types.MsgToCartFn.*;
+import dk.ku.dms.marketplace.types.State.CartState;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 
@@ -44,7 +44,7 @@ public class CartFn implements StatefulFunction {
                 onCustomerSession(context, message);
             }
             // order ---> cart (send checkout result)
-            else if (message.is(GetCart.TYPE)) { onGetCart(context); }
+//            else if (message.is(GetCart.TYPE)) { onGetCart(context); }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -177,16 +177,4 @@ public class CartFn implements StatefulFunction {
         context.storage().remove(CARTSTATE);
 //        logger.info(String.format("clear cart {%s} success", context.self().id()));
     }
-
-    private void onGetCart(Context context) {
-        CartState cartState = getCartState(context);
-
-        String log = String.format(getPartionText(context.self().id())
-                        + "get cart success\n"
-                        + "cart status: {%s}\n"
-                        + "cart content: {\n%s}\n"
-                , cartState.getStatus(), cartState.getCartConent());
-        showLog(log);
-    }
-
 }

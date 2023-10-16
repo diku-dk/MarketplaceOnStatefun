@@ -5,11 +5,10 @@ import dk.ku.dms.marketplace.common.Entity.StockItem;
 import dk.ku.dms.marketplace.common.Utils.Utils;
 import dk.ku.dms.marketplace.constants.Constants;
 import dk.ku.dms.marketplace.constants.Enums;
-import dk.ku.dms.marketplace.Types.MsgToSeller.UpdateProduct;
-import dk.ku.dms.marketplace.Types.MsgToSeller.IncreaseStock;
-import dk.ku.dms.marketplace.Types.MsgToStock.ReserveStockEvent;
-import dk.ku.dms.marketplace.Types.MsgToStock.ConfirmStockEvent;
-import dk.ku.dms.marketplace.Types.State.StockState;
+import dk.ku.dms.marketplace.types.MsgToSeller.UpdateProduct;
+import dk.ku.dms.marketplace.types.MsgToSeller.IncreaseStock;
+import dk.ku.dms.marketplace.types.MsgToStock.ReserveStockEvent;
+import dk.ku.dms.marketplace.types.MsgToStock.ConfirmStockEvent;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 
@@ -23,7 +22,7 @@ public class StockFn implements StatefulFunction {
 
     static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNS_NAMESPACE, "stock");
 
-    static final ValueSpec<StockState> STOCKSTATE = ValueSpec.named("stock").withCustomType(StockState.TYPE);
+    static final ValueSpec<StockItem> STOCKSTATE = ValueSpec.named("stock").withCustomType(StockItem.TYPE);
 
     //  Contains all the information needed to create a function instance
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
@@ -65,8 +64,8 @@ public class StockFn implements StatefulFunction {
         return context.done();
     }
 
-    private StockState getStockState(Context context) {
-        return context.storage().get(STOCKSTATE).orElse(new StockState());
+    private StockItem getStockState(Context context) {
+        return context.storage().get(STOCKSTATE).orElse(new StockItem());
     }
 
     private void showLog(String log) {
@@ -83,10 +82,7 @@ public class StockFn implements StatefulFunction {
         StockItem stockItem = increaseStock.getStockItem();
         int productId = stockItem.getProduct_id();
 
-//        int num = stockItem.getQty_available();
-        StockState stockState = getStockState(context);
-        stockState.addStock(stockItem);
-        context.storage().set(STOCKSTATE, stockState);
+        context.storage().set(STOCKSTATE, stockItem);
 
         String log = String.format(getPartionText(context.self().id())
                         + "addStockItem success, "
@@ -96,10 +92,10 @@ public class StockFn implements StatefulFunction {
     }
 
     private void onUpdateProduct(Context context, Message message) {
-        StockState stockState = getStockState(context);
+        StockItem stockItem = getStockState(context);
         UpdateProduct updateProduct = message.as(UpdateProduct.TYPE);
         int productId = updateProduct.getProduct_id();
-        StockItem stockItem = stockState.getItem();
+//        StockItem stockItem = stockState.getItem();
 //        String result = "fail";
 
         Enums.MarkStatus markStatus = Enums.MarkStatus.ERROR;
@@ -115,7 +111,7 @@ public class StockFn implements StatefulFunction {
             stockItem.setVersion(stockItem.getVersion());
 //            result = "success";
             markStatus = Enums.MarkStatus.SUCCESS;
-            context.storage().set(STOCKSTATE, stockState);
+            context.storage().set(STOCKSTATE, stockItem);
 
             String log = String.format(getPartionText(context.self().id())
                             + "update product success (stock part)\n"
@@ -161,8 +157,7 @@ public class StockFn implements StatefulFunction {
     }
 
     private Enums.ItemStatus onAtptResvReq(Context context, int productId, int quantity, int customerId, int version) {
-        StockState stockState = getStockState(context);
-        StockItem stockItem = stockState.getItem();
+        StockItem stockItem = getStockState(context);
 
         String partitionText = getPartionText(context.self().id());
         String productIdText = "productId: " + productId;
@@ -186,7 +181,7 @@ public class StockFn implements StatefulFunction {
         } else {
             stockItem.setQty_reserved(stockItem.getQty_reserved() + quantity);
             stockItem.setUpdatedAt(LocalDateTime.now());
-            context.storage().set(STOCKSTATE, stockState);
+            context.storage().set(STOCKSTATE, stockItem);
             String log = partitionText + " #sub-task#, attempt reservation request success\n"
                     + productIdText
                     + ", " + "customerId: " + customerId
@@ -198,11 +193,10 @@ public class StockFn implements StatefulFunction {
     }
 
     private void onCancelResvReq(Context context, int productId, int quantity) {
-        StockState stockState = getStockState(context);
-        StockItem stockItem = stockState.getItem();
+        StockItem stockItem = getStockState(context);
         stockItem.setQty_reserved(stockItem.getQty_reserved() - quantity);
         stockItem.setUpdatedAt(LocalDateTime.now());
-        context.storage().set(STOCKSTATE, stockState);
+        context.storage().set(STOCKSTATE, stockItem);
     }
 
     private void paymentFail(Context context, int productId, int quantity) {
@@ -211,14 +205,13 @@ public class StockFn implements StatefulFunction {
 
     private void paymentConfirm(Context context, int productId, int quantity) {
         // increase order count
-        StockState stockState = getStockState(context);
-        StockItem stockItem = stockState.getItem();
+        StockItem stockItem = getStockState(context);
         // 之前忘写了
         stockItem.setQty_reserved(stockItem.getQty_reserved() - quantity);
         stockItem.setQty_available(stockItem.getQty_available() - quantity);
         stockItem.setOrder_count(stockItem.getOrder_count() + 1);
         stockItem.setUpdatedAt(LocalDateTime.now());
-        context.storage().set(STOCKSTATE, stockState);
+        context.storage().set(STOCKSTATE, stockItem);
     }
 
     private void onHandlePaymentResv(Context context, Message message){

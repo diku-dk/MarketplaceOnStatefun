@@ -2,14 +2,27 @@ package dk.ku.dms.marketplace.common.Entity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.ku.dms.marketplace.constants.Constants;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.flink.statefun.sdk.java.TypeName;
+import org.apache.flink.statefun.sdk.java.types.SimpleType;
+import org.apache.flink.statefun.sdk.java.types.Type;
 
 @Getter
 @Setter
 @ToString
 public class Customer {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    public static final Type<Customer> TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "Customer"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, Customer.class));
 
     @JsonProperty("id") private int customerId;
     @JsonProperty("first_name") private String firstName;
@@ -84,5 +97,10 @@ public class Customer {
         this.deliveryCount = deliveryCount;
 //        this.totalSpentItems = BigDecimal.ZERO;
 //        this.totalSpentFreights = BigDecimal.ZERO;
+    }
+
+    @JsonCreator
+    public Customer() {
+
     }
 }

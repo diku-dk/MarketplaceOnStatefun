@@ -4,9 +4,8 @@ import dk.ku.dms.marketplace.common.Entity.Customer;
 import dk.ku.dms.marketplace.common.Entity.Order;
 import dk.ku.dms.marketplace.constants.Constants;
 import dk.ku.dms.marketplace.constants.Enums;
-import dk.ku.dms.marketplace.Types.MsgToCustomer.*;
-import dk.ku.dms.marketplace.Types.MsgToSeller.DeliveryNotification;
-import dk.ku.dms.marketplace.Types.State.CustomerState;
+import dk.ku.dms.marketplace.types.MsgToCustomer.*;
+import dk.ku.dms.marketplace.types.MsgToSeller.DeliveryNotification;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 
@@ -19,7 +18,8 @@ public class CustomerFn implements StatefulFunction {
 
     static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNS_NAMESPACE, "customer");
 
-    static final ValueSpec<CustomerState> CUSTOMERSTATE = ValueSpec.named("customer").withCustomType(CustomerState.TYPE);
+//    static final ValueSpec<CustomerState> CUSTOMERSTATE = ValueSpec.named("customer").withCustomType(CustomerState.TYPE);
+    static final ValueSpec<Customer> CUSTOMERSTATE = ValueSpec.named("customer").withCustomType(Customer.TYPE);
 
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
             .withValueSpec(CUSTOMERSTATE)
@@ -37,10 +37,6 @@ public class CustomerFn implements StatefulFunction {
             if (message.is(InitCustomer.TYPE)) {
                 onInitCustomer(context, message);
             }
-            // client ---> seller (get seller type)
-            else if (message.is(GetCustomer.TYPE)) {
-                onGetCustomer(context, message);
-            }
             // ShippmentFn ---> customer (notify shipped type)
             // OrderFn / PaymentFn ---> customer (notify failed payment type)
             // PaymentFn ---> customer (notify success payment type)
@@ -50,9 +46,6 @@ public class CustomerFn implements StatefulFunction {
             else if (message.is(DeliveryNotification.TYPE)) {
                 onhandleDeliveryNotification(context, message);
             }
-//            else if (message.is(Cleanup.TYPE)) {
-//                onCleanup(context);
-//            }
             else {
 //                System.out.println("do nothing");
             }
@@ -72,17 +65,14 @@ public class CustomerFn implements StatefulFunction {
         System.out.println(log);
     }
 
-    private CustomerState getCustomerState(Context context) {
-        return context.storage().get(CUSTOMERSTATE).orElse(new CustomerState());
+    private Customer getCustomerState(Context context) {
+        return context.storage().get(CUSTOMERSTATE).orElse(new Customer());
     }
 
     private void onInitCustomer(Context context, Message message) {
         InitCustomer initCustomer = message.as(InitCustomer.TYPE);
         Customer customer = initCustomer.getCustomer();
-        CustomerState customerState = getCustomerState(context);
-        customerState.addCustomer(customer);
-
-        context.storage().set(CUSTOMERSTATE, customerState);
+        context.storage().set(CUSTOMERSTATE, customer);
 
         String log = String.format(getPartionText(context.self().id())
                         + "init customer success, "
@@ -91,36 +81,13 @@ public class CustomerFn implements StatefulFunction {
         printLog(log);
     }
 
-    private void onGetCustomer(Context context, Message message) {
-        GetCustomer getCustomer = message.as(GetCustomer.TYPE);
-        int customerId = getCustomer.getCustomerId();
-        CustomerState customerState = getCustomerState(context);
-        Customer customer = customerState.getCustomerById(customerId);
-
-        if (customer == null) {
-            String log = String.format(getPartionText(context.self().id())
-                    + "get customer failed as customer doesnt exist\n"
-            );
-            showLog(log);
-            return;
-        }
-
-        String log = String.format(getPartionText(context.self().id())
-                + "get customer success\n"
-                + customer.toString()
-                + "\n"
-        );
-        showLog(log);
-    }
-
     private void onhandleNotifyCustomer(Context context, Message message) {
         NotifyCustomer notifyCustomer = message.as(NotifyCustomer.TYPE);
         int customerId = notifyCustomer.getCustomerId();
         Order order = notifyCustomer.getOrder();
         Enums.NotificationType notificationType = notifyCustomer.getNotifyType();
 
-        CustomerState customerState = getCustomerState(context);
-        Customer customer = customerState.getCustomerById(customerId);
+        Customer customer = getCustomerState(context);
 
         String notificationInfo = "";
         int statistic = 0;
@@ -148,7 +115,7 @@ public class CustomerFn implements StatefulFunction {
                 break;
         }
 
-        context.storage().set(CUSTOMERSTATE, customerState);
+        context.storage().set(CUSTOMERSTATE, customer);
         String log = String.format(getPartionText(context.self().id())
                         + notificationInfo
                         + ", customer ID: " + customer.getCustomerId() + ", "
@@ -161,10 +128,8 @@ public class CustomerFn implements StatefulFunction {
     }
 
     private void onhandleDeliveryNotification(Context context, Message message) {
-        CustomerState customerState = getCustomerState(context);
-        DeliveryNotification deliveryNotification = message.as(DeliveryNotification.TYPE);
-        int customerId = deliveryNotification.getCustomerId();
-        Customer customer = customerState.getCustomerById(customerId);
+        Customer customer = getCustomerState(context);
         customer.setDeliveryCount(customer.getDeliveryCount() + 1);
+        context.storage().set(CUSTOMERSTATE, customer);
     }
 }

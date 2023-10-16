@@ -4,11 +4,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import dk.ku.dms.marketplace.constants.Constants;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.flink.statefun.sdk.java.TypeName;
+import org.apache.flink.statefun.sdk.java.types.SimpleType;
+import org.apache.flink.statefun.sdk.java.types.Type;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +21,16 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 public class Product {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    public static final Type<Product> TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "ProductState"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, Product.class));
+
+
     @JsonProperty("product_id") private int product_id;
     @JsonProperty("seller_id") private int seller_id;
     @JsonProperty("name") private String name;
@@ -63,6 +78,12 @@ public class Product {
         this.freight_value = freight_value;
         this.status = status;
         this.version = version;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @JsonCreator
+    public Product() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

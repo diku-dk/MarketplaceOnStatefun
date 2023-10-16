@@ -5,11 +5,11 @@ import dk.ku.dms.marketplace.common.Utils.PostgreHelper;
 import dk.ku.dms.marketplace.common.Utils.Utils;
 import dk.ku.dms.marketplace.constants.Enums;
 import dk.ku.dms.marketplace.constants.Constants;
-import dk.ku.dms.marketplace.Types.MsgToOrderFn.PaymentNotification;
-import dk.ku.dms.marketplace.Types.MsgToOrderFn.ShipmentNotification;
-import dk.ku.dms.marketplace.Types.MsgToPaymentFn.InvoiceIssued;
-import dk.ku.dms.marketplace.Types.MsgToSeller.*;
-import dk.ku.dms.marketplace.Types.State.SellerState;
+import dk.ku.dms.marketplace.types.MsgToOrderFn.PaymentNotification;
+import dk.ku.dms.marketplace.types.MsgToOrderFn.ShipmentNotification;
+import dk.ku.dms.marketplace.types.MsgToPaymentFn.InvoiceIssued;
+import dk.ku.dms.marketplace.types.MsgToSeller.*;
+import dk.ku.dms.marketplace.types.State.SellerState;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.statefun.sdk.java.*;
@@ -65,9 +65,9 @@ public class SellerFn implements StatefulFunction {
                 onInitSeller(context, message);
             }
             // client ---> seller (get seller type)
-            else if (message.is(GetSeller.TYPE)) {
-                onGetSeller(context);
-            }
+//            else if (message.is(GetSeller.TYPE)) {
+//                onGetSeller(context);
+//            }
             // order ---> seller
             else if (message.is(InvoiceIssued.TYPE)) {
                 ProcessNewInvoice(context, message);
@@ -133,17 +133,17 @@ public class SellerFn implements StatefulFunction {
         printLog(log);
     }
 
-    private void onGetSeller(Context context) {
-        SellerState sellerState = getSellerState(context);
-        Seller seller = sellerState.getSeller();
-
-        String log = String.format(getPartionText(context.self().id())
-                + "get seller success\n"
-                + seller.toString()
-                + "\n"
-        );
-        showLog(log);
-    }
+//    private void onGetSeller(Context context) {
+//        SellerState sellerState = getSellerState(context);
+//        Seller seller = sellerState.getSeller();
+//
+//        String log = String.format(getPartionText(context.self().id())
+//                + "get seller success\n"
+//                + seller.toString()
+//                + "\n"
+//        );
+//        showLog(log);
+//    }
 
     private void onIncrStockAsyncBegin(Context context, Message message) {
         IncreaseStock increaseStock = message.as(IncreaseStock.TYPE);

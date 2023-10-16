@@ -1,5 +1,7 @@
 package dk.ku.dms.marketplace.common.Entity;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.ku.dms.marketplace.constants.Constants;
 import dk.ku.dms.marketplace.constants.Enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,12 +9,25 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import dk.ku.dms.marketplace.types.State.StockState;
 import lombok.Data;
+import org.apache.flink.statefun.sdk.java.TypeName;
+import org.apache.flink.statefun.sdk.java.types.SimpleType;
+import org.apache.flink.statefun.sdk.java.types.Type;
 
 import java.time.LocalDateTime;
 
 @Data
 public class StockItem {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    public static final Type<StockItem> TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "StockItem"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, StockItem.class));
+
     @JsonProperty("product_id") private int product_id;
     @JsonProperty("seller_id") private int seller_id;
     @JsonProperty("qty_available") private int qty_available;
@@ -53,6 +68,11 @@ public class StockItem {
             this.data = data;
             this.createdAt = LocalDateTime.now();
             this.updatedAt = LocalDateTime.now();
+    }
+
+    @JsonCreator
+    public StockItem() {
+
     }
 
 //    public StockItem() {
