@@ -1,140 +1,31 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 kind: io.statefun.endpoints.v2/http
 spec:
-  functions: e-commerce.fns/*
-#  urlPathTemplate: http://e-commerce-functions:1108/
-  urlPathTemplate: http://host.docker.internal:1108/
-#  urlPathTemplate: http://localhost:1108/
+  functions: com.example/*
+  urlPathTemplate: http://shopping-cart-functions:1108/
   transport:
     type: io.statefun.transports.v1/async
-#---
-#kind: io.statefun.playground.v1/ingress
-#spec:
-#  port: 8090
 ---
-kind: io.statefun.kafka.v1/ingress
+kind: io.statefun.playground.v1/ingress
 spec:
-  id: e-commerce.fns/login
-  address: kafka:9092
-  consumerGroupId: my-group-id
-  topics:
-    - topic: login
-      valueType: e-commerce.types/UserLogin
-      targets:
-        - e-commerce.fns/login
+  port: 8090
 ---
-kind: io.statefun.kafka.v1/ingress
+kind: io.statefun.playground.v1/egress
 spec:
-  id: e-commerce.fns/customer
-  address: kafka:9092
-  consumerGroupId: my-group-id
+  port: 8091
   topics:
-    - topic: customer
-      valueType: e-commerce.types/InitCustomer
-      targets:
-        - e-commerce.fns/customer
----
-kind: io.statefun.kafka.v1/ingress
-spec:
-  id: e-commerce.fns/cart
-  address: kafka:9092
-  consumerGroupId: my-group-id
-  topics:
-    - topic: customerSession
-      valueType: e-commerce.types/CustomerSession
-      targets:
-        - e-commerce.fns/cart
----
-kind: io.statefun.kafka.v1/ingress
-spec:
-  id: e-commerce.fns/seller
-  address: kafka:9092
-  consumerGroupId: my-group-id
-  topics:
-    - topic: seller
-      valueType: e-commerce.types/InitSeller
-      targets:
-        - e-commerce.fns/seller
-    - topic: queryDashboard
-      valueType: e-commerce.types/QueryDashboard
-      targets:
-        - e-commerce.fns/seller
----
-kind: io.statefun.kafka.v1/ingress
-spec:
-  id: e-commerce.fns/product
-  address: kafka:9092
-  consumerGroupId: my-group-id
-  topics:
-    - topic: product
-      valueType: e-commerce.types/AddProduct
-      targets:
-        - e-commerce.fns/product
-    - topic: priceUpdate
-      valueType: e-commerce.types/UpdateSinglePrice
-      targets:
-        - e-commerce.fns/product
-    - topic: productUpdate
-      valueType: e-commerce.types/UpdateProduct
-      targets:
-        - e-commerce.fns/product
----
-kind: io.statefun.kafka.v1/ingress
-spec:
-  id: e-commerce.fns/stock
-  address: kafka:9092
-  consumerGroupId: my-group-id
-  topics:
-    - topic: stock
-      valueType: e-commerce.types/IncreaseStock
-      targets:
-        - e-commerce.fns/stock
----
-kind: io.statefun.kafka.v1/ingress
-spec:
-  id: e-commerce.fns/shipmentProxy
-  address: kafka:9092
-  consumerGroupId: my-group-id
-  topics:
-    - topic: updateDelivery
-      valueType: e-commerce.types/UpdateShipments
-      targets:
-        - e-commerce.fns/shipmentProxy
----
-kind: io.statefun.kafka.v1/egress
-spec:
-  id: e-commerce.fns/kafkaSink
-  address: kafka:9092
-  deliverySemantic:
-    type: exactly-once
-    transactionTimeout: 15min
-  topics:
-    - hello
-    - updateProductTask
-    - updatePriceTask
-    - queryDashboardTask
-    - checkoutTask
-    - updateDeliveryTask
-# 函数的名称空间: 数在 StateFun 中唯一标识函数的字符串。它通常以命名空间前缀+函数名称的形式表示，例如 com.example/UserFn。
-#  functions :函数的选择器，指定哪些函数的消息将会被路由和处理。(应该要和名称空间一致)
-#  urlPathTemplate : 定义了消息转发的目标地址。
-#     http://E-commerce-functions:1108/ 表示
-#     HTTP 请求将被发送到名为 E-commerce-functions 的服务的 1108 端口。
-
-
-#当请求
-# curl -X PUT -H "Content-Type: application/vnd.com.example/RestockItem"
-# -d '{"itemId": "socks", "quantity": 50}' localhost:8090/com.example/stock/socks
-# 发送时，处理过程如下：
-
-# 请求被发送到 localhost:8090，即 module.yaml 中定义的 ingress 端口
-# module.yaml 中定义的 URL 路径模板 /com.example/* 会匹配请求中的路径 /com.example/stock/socks，请求会被路由到 com.example namespace 下的函数。
-#     （com.example/* 表示将以 com.example 命名空间下的所有函数映射到 HTTP 端点）
-
-
-#请求的内容为 {"itemId": "socks", "quantity": 50}，并指定了请求头 Content-Type: application/vnd.com.example/RestockItem。
-#  Stateful Function SDK 的 RequestReplyHandler 接收请求，并将其转换为 StateFun 所使用的异步消息。
-#  接下来，异步消息将被路由到对应的函数，即 com.example.stock 下的函数，并被该函数处理。
-#  在该函数中，异步消息中的 payload 会被解析为 RestockItem 类型的对象，并包含 itemId 和 quantity 属性。
-#  函数中的代码将使用解析后的 itemId 和 quantity 属性，对状态进行更新和计算。
-#  最后，函数返回一个 AsyncOperationResult 对象，该对象包含一个 payload 属性，其中包含了函数的返回值，以及一个 delay 属性，该属性指定了异步消息的延迟时间。
-#  SDK 的 RequestReplyHandler 接收到异步操作结果，将其转换为 HTTP 响应并返回给调用者。
+    - receipts
