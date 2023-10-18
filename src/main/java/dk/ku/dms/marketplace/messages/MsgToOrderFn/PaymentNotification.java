@@ -1,11 +1,9 @@
 package dk.ku.dms.marketplace.messages.MsgToOrderFn;
 
-import dk.ku.dms.marketplace.utils.Constants;
-import dk.ku.dms.marketplace.utils.Enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import dk.ku.dms.marketplace.utils.Constants;
+import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;

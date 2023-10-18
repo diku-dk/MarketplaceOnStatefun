@@ -1,16 +1,15 @@
 package dk.ku.dms.marketplace.functions;
 
-import java.util.concurrent.CompletableFuture;
-
+import dk.ku.dms.marketplace.messages.cart.CartMessages;
 import dk.ku.dms.marketplace.states.CartState;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dk.ku.dms.marketplace.messages.cart.CartMessages;
+import java.util.concurrent.CompletableFuture;
 
-public class CartFn implements StatefulFunction {
+public final class CartFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(CartFn.class);
 

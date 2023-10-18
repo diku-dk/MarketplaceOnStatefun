@@ -1,8 +1,8 @@
 package dk.ku.dms.marketplace.messages.stock;
 
-import dk.ku.dms.marketplace.utils.Enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import dk.ku.dms.marketplace.utils.Enums;
 
 public final class PaymentStockEvent {
 

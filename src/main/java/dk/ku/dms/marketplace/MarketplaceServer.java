@@ -1,9 +1,9 @@
 package dk.ku.dms.marketplace;
 
+import dk.ku.dms.marketplace.functions.*;
 import io.undertow.Undertow;
 import org.apache.flink.statefun.sdk.java.StatefulFunctions;
 import org.apache.flink.statefun.sdk.java.handler.RequestReplyHandler;
-import dk.ku.dms.marketplace.functions.*;
 
 import static io.undertow.UndertowOptions.ENABLE_HTTP2;
 

@@ -1,15 +1,17 @@
 package dk.ku.dms.marketplace.entities;
 
-import dk.ku.dms.marketplace.utils.Constants;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import dk.ku.dms.marketplace.utils.Constants;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;
+
 import java.time.LocalDateTime;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
@@ -71,11 +73,6 @@ public class StockItem {
             this.updatedAt = LocalDateTime.now();
     }
 
-    @JsonCreator
-    public StockItem() {
-
-    }
-
     public void setUpdatedAt(LocalDateTime now) {
         this.updatedAt = now;
     }
@@ -84,14 +81,17 @@ public class StockItem {
         this.version = version;
     }
 
+    @JsonIgnore
     public String getVersion() {
         return version;
     }
 
+    @JsonIgnore
     public int getQtyAvailable() {
         return qty_available;
     }
 
+    @JsonIgnore
     public int getQtyReserved() {
         return qty_reserved;
     }

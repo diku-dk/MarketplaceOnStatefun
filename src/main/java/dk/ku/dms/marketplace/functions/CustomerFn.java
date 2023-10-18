@@ -1,9 +1,9 @@
 package dk.ku.dms.marketplace.functions;
 
 import dk.ku.dms.marketplace.entities.Customer;
-import dk.ku.dms.marketplace.utils.Enums;
-import dk.ku.dms.marketplace.messages.MsgToCustomer.*;
+import dk.ku.dms.marketplace.messages.MsgToCustomer.NotifyCustomer;
 import dk.ku.dms.marketplace.messages.MsgToSeller.DeliveryNotification;
+import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.slf4j.Logger;
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 
-public class CustomerFn implements StatefulFunction {
+public final class CustomerFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomerFn.class);
 

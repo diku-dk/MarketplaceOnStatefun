@@ -1,7 +1,6 @@
 package dk.ku.dms.marketplace.messages.MsgToSeller;
 
 import dk.ku.dms.marketplace.utils.Constants;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;

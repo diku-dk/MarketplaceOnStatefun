@@ -1,14 +1,14 @@
 package dk.ku.dms.marketplace.functions;
 
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.egress.Identifiers;
+import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.Product;
+import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.messages.product.ProductMessages;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
-import dk.ku.dms.marketplace.egress.Identifiers;
-import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.messages.product.ProductMessages;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.EgressMessage;
 import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
-public class ProductFn implements StatefulFunction {
+public final class ProductFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductFn.class);
 

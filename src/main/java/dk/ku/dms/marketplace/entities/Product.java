@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -67,18 +68,22 @@ public class Product {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @JsonIgnore
     public int getProductId() {
         return product_id;
     }
 
+    @JsonIgnore
     public int getSellerId() {
         return seller_id;
     }
 
+    @JsonIgnore
     public String getVersion() {
         return version;
     }
 
+    @JsonIgnore
     public float getPrice() {
         return price;
     }

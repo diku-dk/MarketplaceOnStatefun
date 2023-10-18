@@ -3,7 +3,6 @@ package dk.ku.dms.marketplace.entities;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 import java.util.HashSet;
 import java.util.Set;
 

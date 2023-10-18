@@ -1,11 +1,10 @@
 package dk.ku.dms.marketplace.states;
 
-import dk.ku.dms.marketplace.entities.OrderPayment;
-import dk.ku.dms.marketplace.utils.Constants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import dk.ku.dms.marketplace.entities.OrderPayment;
+import dk.ku.dms.marketplace.utils.Constants;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;

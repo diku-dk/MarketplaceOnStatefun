@@ -3,11 +3,12 @@ package dk.ku.dms.marketplace;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import org.apache.flink.statefun.sdk.java.handler.RequestReplyHandler;
 import org.apache.flink.statefun.sdk.java.slice.Slice;
 import org.apache.flink.statefun.sdk.java.slice.Slices;
+
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public final class UndertowHttpHandler implements HttpHandler {
 

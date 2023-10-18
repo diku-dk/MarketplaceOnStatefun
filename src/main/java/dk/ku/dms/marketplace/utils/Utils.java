@@ -13,10 +13,7 @@ public class Utils {
 
     static final TypeName KFK_EGRESS = TypeName.typeNameOf("e-commerce.fns", "kafkaSink");
 
-    public static String getFnName(String fnType) {
-        String[] fnTypeArr = fnType.split("/");
-        return fnTypeArr[fnTypeArr.length - 1];
-    }
+
 
     public static <T> void sendMessage(Context context, TypeName addressType, String addressId, Type<T> messageType, T messageContent) {
         Message msg = MessageBuilder.forAddress(addressType, addressId)

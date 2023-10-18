@@ -1,15 +1,13 @@
 package dk.ku.dms.marketplace.messages.MsgToOrderFn;
 
-import dk.ku.dms.marketplace.utils.Constants;
-import dk.ku.dms.marketplace.utils.Enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-
+import dk.ku.dms.marketplace.utils.Constants;
+import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;

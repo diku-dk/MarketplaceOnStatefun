@@ -23,13 +23,13 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public class StockFn implements StatefulFunction {
+public final class StockFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(StockFn.class);
 
-    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "stock");
+    public static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "stock");
 
-    static final ValueSpec<StockItem> STOCK_STATE = ValueSpec.named("stock").withCustomType(StockItem.TYPE);
+    public static final ValueSpec<StockItem> STOCK_STATE = ValueSpec.named("stock").withCustomType(StockItem.TYPE);
 
     //  Contains all the information needed to create a function instance
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)

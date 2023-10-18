@@ -1,10 +1,10 @@
-package Functions;
+package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.functions.CartFn;
 import dk.ku.dms.marketplace.messages.cart.CartMessages;
 import dk.ku.dms.marketplace.states.CartState;
-import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.Address;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.apache.flink.statefun.sdk.java.testing.TestContext;

@@ -1,11 +1,12 @@
-package Functions;
+package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.Product;
 import dk.ku.dms.marketplace.entities.TransactionMark;
-import dk.ku.dms.marketplace.functions.CartFn;
 import dk.ku.dms.marketplace.functions.ProductFn;
 import dk.ku.dms.marketplace.messages.product.ProductMessages;
+import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
+import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.Address;
 import org.apache.flink.statefun.sdk.java.message.Message;
@@ -54,10 +55,50 @@ public class ProductTest {
         TransactionMark mark = mapper.readValue(egressMsg.getPayload(), TransactionMark.class);
 
         assert(mark.getStatus() == Enums.MarkStatus.SUCCESS);
-        assert (mark.getTid().compareTo("1") == 0);
+        assert(mark.getTid().compareTo("1") == 0);
 
         // Assert State
         assert(context.storage().get(ProductFn.PRODUCT_STATE).get().getPrice() == updatePrice.getPrice());
+
+    }
+
+    @Test
+    public void testProductUpdate() throws Throwable {
+
+        // Arrange
+        Address self = new Address(ProductFn.TYPE, "1/1");
+
+        TestContext context = TestContext.forTarget(self);
+
+        Product product = new Product(1,1,"testName", "sku",
+                "category", "description", 1, 1, "1");
+
+        // set initial state
+        context.storage().set(ProductFn.PRODUCT_STATE, product);
+
+        Product newProduct = new Product(1,1,"testName", "sku",
+                "category", "description", 1, 1, "2");
+
+        // Action
+        ProductFn function = new ProductFn();
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(ProductMessages.UPDATE_PRODUCT_TYPE, newProduct)
+                .build();
+
+        function.apply(context, message);
+
+        List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
+
+        assert (sentMessages.size() == 1);
+
+        assert(sentMessages.get(0).message().is(StockMessages.PRODUCT_UPDATED_TYPE));
+
+        ProductUpdatedEvent productUpdatedEvent = sentMessages.get(0).message().as(StockMessages.PRODUCT_UPDATED_TYPE);
+        assert (productUpdatedEvent.getInstanceId().contentEquals("2"));
+
+        // Assert State
+        assert(context.storage().get(ProductFn.PRODUCT_STATE).get().getVersion().contentEquals("2"));
 
     }
 
