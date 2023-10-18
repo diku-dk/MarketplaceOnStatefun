@@ -1,185 +1,112 @@
 package dk.ku.dms.marketplace.functions;
 
-import dk.ku.dms.marketplace.common.Utils.Utils;
-import dk.ku.dms.marketplace.common.Entity.Product;
-import dk.ku.dms.marketplace.constants.Constants;
-import dk.ku.dms.marketplace.constants.Enums;
-import dk.ku.dms.marketplace.types.MsgToProdFn.UpdateSinglePrice;
-import dk.ku.dms.marketplace.types.MsgToSeller.*;
+import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.entities.Product;
+import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
+import dk.ku.dms.marketplace.messages.stock.StockMessages;
+import dk.ku.dms.marketplace.utils.Constants;
+import dk.ku.dms.marketplace.utils.Enums;
+import dk.ku.dms.marketplace.egress.Identifiers;
+import dk.ku.dms.marketplace.egress.Messages;
+import dk.ku.dms.marketplace.messages.product.ProductMessages;
 import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.message.EgressMessage;
+import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
 import org.apache.flink.statefun.sdk.java.message.Message;
+import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 public class ProductFn implements StatefulFunction {
 
-    Logger logger = Logger.getLogger("ProductFn");
+    private static final Logger LOG = LoggerFactory.getLogger(ProductFn.class);
 
-    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNS_NAMESPACE, "product");
-
-//    static final ValueSpec<ProductState> PRODUCTSTATE = ValueSpec.named("product").withCustomType(ProductState.TYPE);
-    static final ValueSpec<Product> PRODUCTSTATE = ValueSpec.named("product").withCustomType(Product.TYPE);
+    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "product");
+    static final ValueSpec<Product> PRODUCT_STATE = ValueSpec.named("product").withCustomType(Product.TYPE);
 
     //  Contains all the information needed to create a function instance
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
-            .withValueSpec(PRODUCTSTATE)
+            .withValueSpec(PRODUCT_STATE)
             .withSupplier(ProductFn::new)
             .build();
-
-    private static final TypeName ECOMMERCE_EGRESS = TypeName.typeNameOf(Constants.EGRESS_NAMESPACE, "egress");
-    static final TypeName KFK_EGRESS = TypeName.typeNameOf("e-commerce.fns", "kafkaSink");
-
-    private String getPartionText(String id) {
-        return String.format("[ ProductFn partitionId %s ] ", id);
-    }
-    private String getPartionTextInline(String id) {
-        return String.format("\n[ ProductFn partitionId %s ] ", id);
-    }
 
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try{
-//            if (message.is(GetProduct.TYPE)) {
-//                onGetProduct(context, message);
-//            }
-            // seller --> product (add product)
-            if (message.is(AddProduct.TYPE)) {
-                onAddProduct(context, message);
+            // driver --> product (add product)
+            if (message.is(ProductMessages.ADD_PRODUCT_TYPE)) {
+                Product product = message.as(ProductMessages.ADD_PRODUCT_TYPE);
+                context.storage().set(PRODUCT_STATE, product);
             }
-            // driver --> product (delete product)
-            else if (message.is(UpdateProduct.TYPE)) {
-                String log_ = getPartionText(context.self().id())
-                        + "update product [receive], " + "tid : " + message.as(UpdateProduct.TYPE).getVersion() + "\n";
-                printLog(log_);
-                logger.info("receive update product, tid : " + message.as(UpdateProduct.TYPE).getVersion());
+            // driver --> product (update product)
+            else if (message.is(ProductMessages.UPDATE_PRODUCT_TYPE)) {
                 onUpdateProduct(context, message);
             }
             // driver --> product (update price)
-            else if (message.is(UpdateSinglePrice.TYPE)) {
+            else if (message.is(ProductMessages.UpdatePrice.TYPE)) {
                 onUpdatePrice(context, message);
-            }
-            else {
-                printLog("ProductFn received unknown message type: " + message);
             }
 
         } catch (Exception e) {
-            System.out.println("Exception in ProductFn !!!!!!!!!!!!!");
-            e.printStackTrace();
+            LOG.error(e.getMessage());
         }
         return context.done();
     }
 
-    private void showLog(String log) {
-        logger.info(log);
-//        System.out.println(log);
-    }
-
-    private void printLog(String log) {
-        System.out.println(log);
-    }
-
-    private Product getProductState(Context context) {
-        return context.storage().get(PRODUCTSTATE).orElse(new Product());
-    }
-
-    private void onAddProduct(Context context, Message message) {
-//        Product productState = getProductState(context);
-        AddProduct addProduct = message.as(AddProduct.TYPE);
-        Product product = addProduct.getProduct();
-//        productState.addProduct(product);
-        context.storage().set(PRODUCTSTATE, product);
-
-        String log = getPartionText(context.self().id())
-//                + " #sub-task# "
-                + "add product success, " + "product Id : " + product.getProduct_id() + "\n";
-        printLog(log);
-    }
-
     private void onUpdateProduct(Context context, Message message) {
-        UpdateProduct updateProduct = message.as(UpdateProduct.TYPE);
-        int productId = updateProduct.getProduct_id();
+        Product product = message.as(ProductMessages.UPDATE_PRODUCT_TYPE);
+        context.storage().set(PRODUCT_STATE, product);
 
-        String log_ = getPartionText(context.self().id())
-                + "update product [receive], " + "tid : " + updateProduct.getVersion() + "\n";
-        printLog(log_);
+        String id = product.getSellerId() + "/" + product.getProductId();
 
-        Product product = getProductState(context);
-        if (product == null) {
-            String log = getPartionText(context.self().id())
-                    + "update product failed as product not exist\n"
-                    + "product Id : " + productId
-                    + "\n";
-//            showLog(log);
-            logger.warning(log);
-            return;
-        }
+        ProductUpdatedEvent productUpdated =
+                new ProductUpdatedEvent(product.getSellerId(), product.getProductId(), product.getVersion());
 
-        product.setVersion(updateProduct.getVersion());
-        product.setUpdatedAt(LocalDateTime.now());
+        Message updateProductMsg =
+                MessageBuilder.forAddress(StockFn.TYPE, id)
+                        .withCustomType(StockMessages.PRODUCT_UPDATED_TYPE, productUpdated)
+                        .build();
 
-        context.storage().set(PRODUCTSTATE, product);
-
-        String log = getPartionText(context.self().id())
-                + "delete product success AT PRODUCTFN\n"
-                + "product Id : " + productId
-                + "\n";
-        showLog(log);
-
-//        String stockFnPartitionID = String.valueOf((int) (productId % Constants.nStockPartitions));
-        String stockFnPartitionID = String.valueOf(productId);
-        Utils.sendMessage(context, StockFn.TYPE, stockFnPartitionID, UpdateProduct.TYPE, updateProduct);
+        context.send(updateProductMsg);
     }
 
     private void onUpdatePrice(Context context, Message message) {
-        UpdateSinglePrice updatePrice = message.as(UpdateSinglePrice.TYPE);
-        int productId = updatePrice.getProductId();
+        ProductMessages.UpdatePrice updatePrice = message.as(ProductMessages.UpdatePrice.TYPE);
+        String tid = updatePrice.getInstanceId();
+        int sellerId = updatePrice.getSellerId();
+        Product product = context.storage().get(PRODUCT_STATE).orElse(null);
+        if(product == null){
+            TransactionMark mark = new TransactionMark(tid,
+                    Enums.TransactionType.PRICE_UPDATE, sellerId, Enums.MarkStatus.ERROR, "product");
 
-//        logger.info("[receive] {tid=" + updatePrice.getInstanceId() + "} update product, productFn " + context.self().id());
-        String log_ = getPartionText(context.self().id())
-                + "update price [receive], " + "tid : " + updatePrice.getInstanceId() + "\n";
-        printLog(log_);
+            final EgressMessage egressMessage =
+                    EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                            .withCustomType(
+                                    Messages.EGRESS_RECORD_JSON_TYPE,
+                                    new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, mark.toString()))
+                            .build();
 
-        Product product = getProductState(context);
-
-        Enums.MarkStatus markStatus = Enums.MarkStatus.ERROR;
-//        String result = "fail";
-        if (product == null) {
-            String log = getPartionText(context.self().id())
-                    + "update price failed as product not exist\n"
-                    + "product Id : " + productId
-                    + "\n";
-            logger.warning(log);
-        } else {
-            product.setPrice(updatePrice.getPrice());
-            product.setUpdatedAt(LocalDateTime.now());
-//            result = "success";
-            markStatus = Enums.MarkStatus.SUCCESS;
-            context.storage().set(PRODUCTSTATE, product);
-
-            String log = getPartionText(context.self().id())
-                    + "update product success\n"
-                    + "product Id : " + product.getProduct_id()
-                    + " new price : " + product.getPrice()
-                    + "\n";
-//            showLog(log);
+            context.send(egressMessage);
+            return;
         }
 
-        int tid = updatePrice.getInstanceId();
-        int sellerId = updatePrice.getSellerId();
+        product.setPrice(updatePrice.getPrice());
+        product.setUpdatedAt(LocalDateTime.now());
+        context.storage().set(PRODUCT_STATE, product);
 
-        Utils.notifyTransactionComplete(context,
-                Enums.TransactionType.updatePriceTask.toString(),
-                String.valueOf(context.self().id()),
-                productId,
-                tid,
-                String.valueOf(sellerId),
-                markStatus,
-                "product");
+        TransactionMark mark = new TransactionMark(tid,
+                Enums.TransactionType.PRICE_UPDATE, sellerId, Enums.MarkStatus.SUCCESS, "product");
 
-        String log = getPartionText(context.self().id())
-                + "update price [success], " + "tid : " + updatePrice.getInstanceId() + "\n";
-        printLog(log);
+        final EgressMessage egressMessage =
+                EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                        .withCustomType(
+                                Messages.EGRESS_RECORD_JSON_TYPE,
+                                new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, mark.toString()))
+                        .build();
+
+        context.send(egressMessage);
     }
 }

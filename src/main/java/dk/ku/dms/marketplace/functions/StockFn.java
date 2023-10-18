@@ -1,236 +1,173 @@
 package dk.ku.dms.marketplace.functions;
 
-import dk.ku.dms.marketplace.common.Entity.BasketItem;
-import dk.ku.dms.marketplace.common.Entity.StockItem;
-import dk.ku.dms.marketplace.common.Utils.Utils;
-import dk.ku.dms.marketplace.constants.Constants;
-import dk.ku.dms.marketplace.constants.Enums;
-import dk.ku.dms.marketplace.types.MsgToSeller.UpdateProduct;
-import dk.ku.dms.marketplace.types.MsgToSeller.IncreaseStock;
-import dk.ku.dms.marketplace.types.MsgToStock.ReserveStockEvent;
-import dk.ku.dms.marketplace.types.MsgToStock.ConfirmStockEvent;
+import dk.ku.dms.marketplace.egress.Identifiers;
+import dk.ku.dms.marketplace.egress.Messages;
+import dk.ku.dms.marketplace.entities.CartItem;
+import dk.ku.dms.marketplace.entities.StockItem;
+import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.stock.PaymentStockEvent;
+import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
+import dk.ku.dms.marketplace.messages.stock.StockMessages;
+import dk.ku.dms.marketplace.utils.Constants;
+import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.message.EgressMessage;
+import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
 import org.apache.flink.statefun.sdk.java.message.Message;
+import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 public class StockFn implements StatefulFunction {
 
-    Logger logger = Logger.getLogger("StockFn");
+    private static final Logger LOG = LoggerFactory.getLogger(StockFn.class);
 
-    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNS_NAMESPACE, "stock");
+    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "stock");
 
-    static final ValueSpec<StockItem> STOCKSTATE = ValueSpec.named("stock").withCustomType(StockItem.TYPE);
+    static final ValueSpec<StockItem> STOCK_STATE = ValueSpec.named("stock").withCustomType(StockItem.TYPE);
 
     //  Contains all the information needed to create a function instance
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
-            .withValueSpec(STOCKSTATE)
+            .withValueSpec(STOCK_STATE)
             .withSupplier(StockFn::new)
             .build();
-
-    private String getPartionText(String id) {
-        return String.format("[ StockFn partitionId %s ] ", id);
-    }
-
-    static final TypeName KFK_EGRESS = TypeName.typeNameOf("e-commerce.fns", "kafkaSink");
 
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
-            // seller ---> stock (increase stock)
-            if (message.is(IncreaseStock.TYPE)) {
-                addStockItem(context, message);
+            // seller ---> stock (set stock)
+            if (message.is(StockMessages.SET_STOCK_ITEM_TYPE)) {
+                StockItem item = message.as(StockMessages.SET_STOCK_ITEM_TYPE);
+                context.storage().set(STOCK_STATE, item);
             }
-            // product ---> stock (delete product)
-            else if (message.is(UpdateProduct.TYPE)) {
+            // product ---> stock (update product)
+            else if (message.is(StockMessages.PRODUCT_UPDATED_TYPE)) {
                 onUpdateProduct(context, message);
             }
-            // order ---> stock (attempt reservsation)
-            else if (message.is(ReserveStockEvent.TYPE)) {
-                onHandleCheckoutResv(context, message);
+            // order ---> stock (attempt reservation)
+            else if (message.is(StockMessages.ATTEMPT_RESERVATION_TYPE)) {
+                onAttemptReservation(context, message);
             }
             // payment ---> stock (payment result finally decided change stock or not
-            else if (message.is(ConfirmStockEvent.TYPE)) {
-                onHandlePaymentResv(context, message);
+            else if (message.is(StockMessages.PAYMENT_STOCK_EVENT_TYPE)) {
+                onHandlePaymentResult(context, message);
             }
         } catch (Exception e) {
-//            System.out.println("StockFn apply error !!!!!!!!!!!!!!!");
-//            e.printStackTrace();
-            throw new RuntimeException(e);
+            LOG.error(e.getMessage());
         }
 
         return context.done();
     }
 
-    private StockItem getStockState(Context context) {
-        return context.storage().get(STOCKSTATE).orElse(new StockItem());
-    }
-
-    private void showLog(String log) {
-        logger.info(log);
-//        System.out.println(log);
-    }
-
-    private void printLog(String log) {
-        System.out.println(log);
-    }
-
-    private void addStockItem(Context context, Message message) {
-        IncreaseStock increaseStock = message.as(IncreaseStock.TYPE);
-        StockItem stockItem = increaseStock.getStockItem();
-        int productId = stockItem.getProduct_id();
-
-        context.storage().set(STOCKSTATE, stockItem);
-
-        String log = String.format(getPartionText(context.self().id())
-                        + "addStockItem success, "
-                        + "productId: %s\n"
-                , productId);
-        printLog(log);
-    }
-
     private void onUpdateProduct(Context context, Message message) {
-        StockItem stockItem = getStockState(context);
-        UpdateProduct updateProduct = message.as(UpdateProduct.TYPE);
-        int productId = updateProduct.getProduct_id();
-//        StockItem stockItem = stockState.getItem();
-//        String result = "fail";
+        ProductUpdatedEvent productUpdated = message.as(StockMessages.PRODUCT_UPDATED_TYPE);
 
-        Enums.MarkStatus markStatus = Enums.MarkStatus.ERROR;
+        int sellerId = productUpdated.getSellerId();
+        String version = productUpdated.getInstanceId();
+
+        StockItem stockItem =  context.storage().get(STOCK_STATE).orElse(null);
+
         if (stockItem == null) {
-            String log = String.format(getPartionText(context.self().id())
-                            + "update product failed as product not exist\n"
-                            + "productId: %s\n"
-                    , productId);
-            logger.warning(log);
-        } else {
-            stockItem.setUpdatedAt(LocalDateTime.now());
-//            stockItem.setIs_active(false);
-            stockItem.setVersion(stockItem.getVersion());
-//            result = "success";
-            markStatus = Enums.MarkStatus.SUCCESS;
-            context.storage().set(STOCKSTATE, stockItem);
+            TransactionMark mark = new TransactionMark(version,
+                    Enums.TransactionType.UPDATE_PRODUCT, sellerId, Enums.MarkStatus.ERROR, "stock");
 
-            String log = String.format(getPartionText(context.self().id())
-                            + "update product success (stock part)\n"
-                            + "productId: %s\n"
-                    , productId);
-//            showLog(log);
+            final EgressMessage egressMessage =
+                    EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                            .withCustomType(
+                                    Messages.EGRESS_RECORD_JSON_TYPE,
+                                    new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, mark.toString()))
+                            .build();
+
+            context.send(egressMessage);
+            return;
         }
 
-        int tid = updateProduct.getVersion();
-        int sellerId = updateProduct.getSeller_id();
+        stockItem.setUpdatedAt(LocalDateTime.now());
+        stockItem.setVersion(productUpdated.getInstanceId());
+        context.storage().set(STOCK_STATE, stockItem);
 
-        Utils.notifyTransactionComplete(context,
-                Enums.TransactionType.updateProductTask.toString(),
-                context.self().id(),
-                productId,
-                tid,
-                String.valueOf(sellerId),
-                markStatus,
-                "stock");
+        TransactionMark mark = new TransactionMark(version,
+                Enums.TransactionType.UPDATE_PRODUCT, sellerId, Enums.MarkStatus.SUCCESS, "stock");
 
-        String log_ = getPartionText(context.self().id())
-                + "update product success, " + "tid : " + updateProduct.getVersion() + "\n";
-        printLog(log_);
-//        logger.info("[success] {tid=" + deleteProduct.getInstanceId() + "} delete product, stockFn " + context.self().id());
+        final EgressMessage egressMessage =
+                EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                        .withCustomType(
+                                Messages.EGRESS_RECORD_JSON_TYPE,
+                                new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, mark.toString()))
+                        .build();
+
+        context.send(egressMessage);
+
     }
 
-    private void onHandleCheckoutResv(Context context, Message message) {
-        ReserveStockEvent reserveStockEvent = message.as(ReserveStockEvent.TYPE);
+    private void onAttemptReservation(Context context, Message message) {
+        CartItem cartItem = message.as(StockMessages.ATTEMPT_RESERVATION_TYPE);
 
-        BasketItem basketItem = reserveStockEvent.getItem();
-        int productId = basketItem.getProductId();
-        int quantity = basketItem.getQuantity();
-        int customerId = reserveStockEvent.getCustomerId();
-        int version = basketItem.getVersion();
+        int productId = cartItem.getProductId();
+        int quantity = cartItem.getQuantity();
+        String version = cartItem.getVersion();
 
-        Enums.ItemStatus itemStatus = onAtptResvReq(context, productId, quantity, customerId, version);
-        reserveStockEvent.setItemStatus(itemStatus);
+        Enums.ItemStatus status = getItemStatus(context, quantity, version);
 
-        Utils.sendMessageToCaller(
-                context,
-                ReserveStockEvent.TYPE,
-                reserveStockEvent);
+        final Optional<Address> caller = context.caller();
+        if (caller.isPresent()) {
+            OrderMessages.AttemptReservationResponse resp =
+                    new OrderMessages.AttemptReservationResponse(cartItem.getSellerId(), productId, status);
+            final Message request = MessageBuilder.forAddress(StockFn.TYPE, caller.get().id())
+                                                    .withCustomType(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE, resp)
+                                                    .build();
+            context.send(request);
+        } else {
+            LOG.error("Caller unknown");
+        }
+
     }
 
-    private Enums.ItemStatus onAtptResvReq(Context context, int productId, int quantity, int customerId, int version) {
-        StockItem stockItem = getStockState(context);
+    private Enums.ItemStatus getItemStatus(Context context, int quantity, String version) {
+        StockItem stockItem = context.storage().get(STOCK_STATE).orElse(null);
 
-        String partitionText = getPartionText(context.self().id());
-        String productIdText = "productId: " + productId;
+        if(stockItem == null){
+            return Enums.ItemStatus.UNKNOWN;
+        }
 
-        if (stockItem.getVersion() != version) {
-            String log = partitionText + " #sub-task#, attempt reservation request failed as product version not match\n"
-                    + productIdText
-                    + ", " + "customerId: " + customerId + "\n";
-//            showLog(log);
+        if (stockItem.getVersion().compareTo(version) == 0) {
             return Enums.ItemStatus.UNAVAILABLE;
         }
-        if (stockItem.getQty_available() - stockItem.getQty_reserved() < quantity) {
-            String log = partitionText + " #sub-task#, attempt reservation request failed as stock not enough\n"
-                    + productIdText
-                    + ", " + "customerId: " + customerId
-                    + ", " + "qty_available: " + stockItem.getQty_available()
-                    + ", " + "need: " + quantity + "\n";
 
-//            showLog(log);
+        if (stockItem.getQtyAvailable() - stockItem.getQtyReserved() < quantity) {
             return Enums.ItemStatus.OUT_OF_STOCK;
-        } else {
-            stockItem.setQty_reserved(stockItem.getQty_reserved() + quantity);
-            stockItem.setUpdatedAt(LocalDateTime.now());
-            context.storage().set(STOCKSTATE, stockItem);
-            String log = partitionText + " #sub-task#, attempt reservation request success\n"
-                    + productIdText
-                    + ", " + "customerId: " + customerId
-                    + ", " + "qty_available: " + stockItem.getQty_available()
-                    + ", need: " + quantity + "\n";
-//            showLog(log);
-            return Enums.ItemStatus.IN_STOCK;
         }
-    }
 
-    private void onCancelResvReq(Context context, int productId, int quantity) {
-        StockItem stockItem = getStockState(context);
-        stockItem.setQty_reserved(stockItem.getQty_reserved() - quantity);
+        stockItem.reserve(quantity);
         stockItem.setUpdatedAt(LocalDateTime.now());
-        context.storage().set(STOCKSTATE, stockItem);
+        context.storage().set(STOCK_STATE, stockItem);
+
+        return Enums.ItemStatus.IN_STOCK;
     }
 
-    private void paymentFail(Context context, int productId, int quantity) {
-        onCancelResvReq(context, productId, quantity);
-    }
+    private void onHandlePaymentResult(Context context, Message message){
 
-    private void paymentConfirm(Context context, int productId, int quantity) {
-        // increase order count
-        StockItem stockItem = getStockState(context);
-        // 之前忘写了
-        stockItem.setQty_reserved(stockItem.getQty_reserved() - quantity);
-        stockItem.setQty_available(stockItem.getQty_available() - quantity);
-        stockItem.setOrder_count(stockItem.getOrder_count() + 1);
-        stockItem.setUpdatedAt(LocalDateTime.now());
-        context.storage().set(STOCKSTATE, stockItem);
-    }
-
-    private void onHandlePaymentResv(Context context, Message message){
-        ConfirmStockEvent confirmStockEvent = message.as(ConfirmStockEvent.TYPE);
-        int productId = confirmStockEvent.getProductId();
-        int quantity = confirmStockEvent.getQuantity();
-        Enums.OrderStatus orderStatus = confirmStockEvent.getOrderStatus();
-        String uniqueId = confirmStockEvent.getUniqueOrderId();
-
-        String log = String.format(getPartionText(context.self().id())
-                + "StockFn apply PaymentResv, productId: %s, uniqueOrderId: %s", productId, uniqueId);
-//        showLog(log);
-
-        if (orderStatus == Enums.OrderStatus.PAYMENT_PROCESSED) {
-//            NOTE: NOT call onConfirmResvReq here
-            paymentConfirm(context, productId, quantity);
-        } else {
-            paymentFail(context, productId, quantity);
+        StockItem stockItem =  context.storage().get(STOCK_STATE).orElse(null);
+        if(stockItem == null){
+            LOG.error("Stock item not present in state. ID = "+context.self().id());
+            return;
         }
+
+        PaymentStockEvent paymentResult = message.as(StockMessages.PAYMENT_STOCK_EVENT_TYPE);
+        Enums.PaymentStatus orderStatus = paymentResult.getStatus();
+
+        if (orderStatus == Enums.PaymentStatus.succeeded) {
+            stockItem.confirmReservation(paymentResult.getQuantity());
+        } else {
+            stockItem.cancelReservation(paymentResult.getQuantity());
+        }
+        stockItem.setUpdatedAt(LocalDateTime.now());
+        context.storage().set(STOCK_STATE, stockItem);
     }
 }
 
