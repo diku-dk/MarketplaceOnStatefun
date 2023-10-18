@@ -6,6 +6,7 @@ import dk.ku.dms.marketplace.entities.StockItem;
 import dk.ku.dms.marketplace.entities.TransactionMark;
 import dk.ku.dms.marketplace.functions.OrderFn;
 import dk.ku.dms.marketplace.functions.StockFn;
+import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
@@ -120,8 +121,47 @@ public class StockTest {
 
         assert(sentMessages.get(0).message().is(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE));
 
-        OrderMessages.AttemptReservationResponse resp = sentMessages.get(0).message().as(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE);
+        AttemptReservationResponse resp = sentMessages.get(0).message().as(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE);
         assert (resp.getStatus() == Enums.ItemStatus.UNAVAILABLE);
+
+    }
+
+    @Test
+    public void testSuccessAttemptReservation() throws Throwable {
+
+        // Arrange
+        Address self = new Address(StockFn.TYPE, "1/1");
+        Address caller = new Address(OrderFn.TYPE, "1");
+
+        TestContext context = TestContext.forTargetWithCaller(self, caller);
+
+        StockItem stockItem = new StockItem(1,1,10, 0,
+                0, 1, "test",  "1");
+
+        // set initial state
+        context.storage().set(StockFn.STOCK_STATE, stockItem);
+
+
+        CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "1");
+        AttemptReservationEvent event = new AttemptReservationEvent(1,item);
+
+        // Action
+        StockFn function = new StockFn();
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(StockMessages.ATTEMPT_RESERVATION_TYPE, event)
+                .build();
+
+        function.apply(context, message);
+
+        List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
+
+        assert(sentMessages.size() == 1);
+
+        assert(sentMessages.get(0).message().is(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE));
+
+        AttemptReservationResponse resp = sentMessages.get(0).message().as(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE);
+        assert (resp.getStatus() == Enums.ItemStatus.IN_STOCK);
 
     }
 

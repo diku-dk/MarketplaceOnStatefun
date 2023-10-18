@@ -1,8 +1,10 @@
 package dk.ku.dms.marketplace.functions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.ku.dms.marketplace.utils.Constants;
-import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.Context;
+import org.apache.flink.statefun.sdk.java.StatefulFunction;
+import org.apache.flink.statefun.sdk.java.TypeName;
+import org.apache.flink.statefun.sdk.java.ValueSpec;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

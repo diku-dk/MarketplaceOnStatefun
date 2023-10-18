@@ -19,8 +19,6 @@ import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
 public class Checkout {
 
-    
-
     public static final Type<Checkout> TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "Checkout"),

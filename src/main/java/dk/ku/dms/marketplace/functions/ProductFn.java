@@ -5,6 +5,7 @@ import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.Product;
 import dk.ku.dms.marketplace.entities.TransactionMark;
 import dk.ku.dms.marketplace.messages.product.ProductMessages;
+import dk.ku.dms.marketplace.messages.product.UpdatePrice;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.utils.Constants;
@@ -85,7 +86,7 @@ public final class ProductFn implements StatefulFunction {
     }
 
     private void onUpdatePrice(Context context, Message message) {
-        ProductMessages.UpdatePrice updatePrice = message.as(ProductMessages.UPDATE_PRICE_TYPE);
+        UpdatePrice updatePrice = message.as(ProductMessages.UPDATE_PRICE_TYPE);
         String tid = updatePrice.getInstanceId();
         int sellerId = updatePrice.getSellerId();
         Product product = context.storage().get(PRODUCT_STATE).orElse(null);

@@ -1,12 +1,17 @@
 package dk.ku.dms.marketplace.functions;
 
+import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.cart.CartMessages;
+import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
+import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.states.CartState;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
+import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
 public final class CartFn implements StatefulFunction {
@@ -22,7 +27,6 @@ public final class CartFn implements StatefulFunction {
                                                         .withSupplier(CartFn::new)
                                                         .build();
 
-
     private CartState getCartState(Context context) {
         return context.storage().get(CART_STATE).orElse(new CartState());
     }
@@ -32,27 +36,36 @@ public final class CartFn implements StatefulFunction {
         try {
             if (message.is(CartMessages.ADD_CART_ITEM_TYPE)) {
                 CartState cartState = getCartState(context);
-                cartState.getItems().add( message.as(CartMessages.ADD_CART_ITEM_TYPE));
+                cartState.getItems().add( message.as(CartMessages.ADD_CART_ITEM_TYPE) );
                 context.storage().set(CART_STATE, cartState);
             } else if(message.is(CartMessages.CUSTOMER_CHECKOUT_TYPE)){
                 CartState cartState = getCartState(context);
+
+                CustomerCheckout customerCheckout = message.as(CartMessages.CUSTOMER_CHECKOUT_TYPE);
+
                 cartState.setStatus(CartState.Status.CHECKOUT_SENT);
 
+                CheckoutRequest checkoutRequest = new CheckoutRequest(LocalDateTime.now(), customerCheckout, cartState.getItems(), customerCheckout.getInstanceId());
+                Message checkoutRequestMsg =
+                        MessageBuilder.forAddress(OrderFn.TYPE, context.self().id())
+                                .withCustomType(OrderMessages.CHECKOUT_REQUEST_TYPE, checkoutRequest)
+                                .build();
 
+                context.send(checkoutRequestMsg);
 
-                onSeal(context);
+                onSeal(context, cartState);
             } else if(message.is(CartMessages.SEAL_TYPE)){
-                onSeal(context);
+                CartState cartState = getCartState(context);
+                onSeal(context, cartState);
             }
         } catch (Exception e) {
-            LOG.error("");
+            LOG.error("ERROR: "+e.getMessage());
         }
 
         return context.done();
     }
 
-    private void onSeal(Context context) {
-        CartState cartState = getCartState(context);
+    private void onSeal(Context context, CartState cartState) {
         cartState.setStatus(CartState.Status.OPEN);
         cartState.seal();
         context.storage().set(CART_STATE, cartState);

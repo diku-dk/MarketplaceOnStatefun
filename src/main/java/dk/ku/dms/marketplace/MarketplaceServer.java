@@ -1,6 +1,9 @@
 package dk.ku.dms.marketplace;
 
-import dk.ku.dms.marketplace.functions.*;
+import dk.ku.dms.marketplace.functions.CartFn;
+import dk.ku.dms.marketplace.functions.CustomerFn;
+import dk.ku.dms.marketplace.functions.ProductFn;
+import dk.ku.dms.marketplace.functions.StockFn;
 import io.undertow.Undertow;
 import org.apache.flink.statefun.sdk.java.StatefulFunctions;
 import org.apache.flink.statefun.sdk.java.handler.RequestReplyHandler;

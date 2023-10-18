@@ -5,6 +5,7 @@ import dk.ku.dms.marketplace.entities.Product;
 import dk.ku.dms.marketplace.entities.TransactionMark;
 import dk.ku.dms.marketplace.functions.ProductFn;
 import dk.ku.dms.marketplace.messages.product.ProductMessages;
+import dk.ku.dms.marketplace.messages.product.UpdatePrice;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.utils.Enums;
@@ -35,7 +36,7 @@ public class ProductTest {
         // set initial state
         context.storage().set(ProductFn.PRODUCT_STATE, product);
 
-        ProductMessages.UpdatePrice updatePrice = new ProductMessages.UpdatePrice(1, 1, 10, "1");
+        UpdatePrice updatePrice = new UpdatePrice(1, 1, 10, "1");
 
         // Action
         ProductFn function = new ProductFn();
@@ -58,7 +59,7 @@ public class ProductTest {
         assert(mark.getTid().compareTo("1") == 0);
 
         // Assert State
-        assert(context.storage().get(ProductFn.PRODUCT_STATE).get().getPrice() == updatePrice.getPrice());
+        assert(context.storage().get(ProductFn.PRODUCT_STATE).isPresent() && context.storage().get(ProductFn.PRODUCT_STATE).get().getPrice() == updatePrice.getPrice());
 
     }
 
@@ -98,7 +99,7 @@ public class ProductTest {
         assert (productUpdatedEvent.getInstanceId().contentEquals("2"));
 
         // Assert State
-        assert(context.storage().get(ProductFn.PRODUCT_STATE).get().getVersion().contentEquals("2"));
+        assert(context.storage().get(ProductFn.PRODUCT_STATE).isPresent() && context.storage().get(ProductFn.PRODUCT_STATE).get().getVersion().contentEquals("2"));
 
     }
 

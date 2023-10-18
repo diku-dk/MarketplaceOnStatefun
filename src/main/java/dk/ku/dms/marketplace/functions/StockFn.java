@@ -5,6 +5,7 @@ import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.StockItem;
 import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.PaymentStockEvent;
@@ -118,8 +119,8 @@ public final class StockFn implements StatefulFunction {
 
         final Optional<Address> caller = context.caller();
         if (caller.isPresent()) {
-            OrderMessages.AttemptReservationResponse resp =
-                    new OrderMessages.AttemptReservationResponse(attemptReservationEvent.getOrderId(), cartItem.getSellerId(), productId, status);
+            AttemptReservationResponse resp =
+                    new AttemptReservationResponse(attemptReservationEvent.getOrderId(), cartItem.getSellerId(), productId, status);
             final Message request = MessageBuilder.forAddress(StockFn.TYPE, caller.get().id())
                                                     .withCustomType(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE, resp)
                                                     .build();

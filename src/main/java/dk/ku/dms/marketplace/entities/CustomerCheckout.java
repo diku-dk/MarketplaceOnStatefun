@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class CustomerCheckout {
@@ -51,7 +52,7 @@ public final class CustomerCheckout {
     private final int installments;
 
     @JsonProperty("instanceId")
-    private final int instanceId;
+    private final String instanceId;
 
     @JsonCreator
     public CustomerCheckout(
@@ -70,7 +71,7 @@ public final class CustomerCheckout {
             @JsonProperty("CardSecurityNumber") String cardSecurityNumber,
             @JsonProperty("CardBrand") String cardBrand,
             @JsonProperty("Installments") int installments,
-            @JsonProperty("instanceId") int instanceId) {
+            @JsonProperty("instanceId") String instanceId) {
         this.customerId = customerId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -89,66 +90,82 @@ public final class CustomerCheckout {
         this.instanceId = instanceId;
     }
 
-    public int getInstanceId() {
+    @JsonIgnore
+    public String getInstanceId() {
         return instanceId;
     }
 
+    @JsonIgnore
     public int getCustomerId() {
         return customerId;
     }
 
+    @JsonIgnore
     public String getFirstName() {
         return firstName;
     }
 
+    @JsonIgnore
     public String getLastName() {
         return lastName;
     }
 
+    @JsonIgnore
     public String getStreet() {
         return street;
     }
 
+    @JsonIgnore
     public String getComplement() {
         return complement;
     }
 
+    @JsonIgnore
     public String getCity() {
         return city;
     }
 
+    @JsonIgnore
     public String getState() {
         return state;
     }
 
+    @JsonIgnore
     public String getZipCode() {
         return zipCode;
     }
 
+    @JsonIgnore
     public String getPaymentType() {
         return paymentType;
     }
 
+    @JsonIgnore
     public String getCardNumber() {
         return cardNumber;
     }
 
+    @JsonIgnore
     public String getCardHolderName() {
         return cardHolderName;
     }
 
+    @JsonIgnore
     public String getCardExpiration() {
         return cardExpiration;
     }
 
+    @JsonIgnore
     public String getCardSecurityNumber() {
         return cardSecurityNumber;
     }
 
+    @JsonIgnore
     public String getCardBrand() {
         return cardBrand;
     }
 
+    @JsonIgnore
     public int getInstallments() {
         return installments;
     }
