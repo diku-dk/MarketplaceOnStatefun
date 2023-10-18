@@ -14,18 +14,29 @@ import org.apache.flink.statefun.sdk.java.message.EgressMessage;
 import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
+import org.apache.flink.statefun.sdk.java.types.SimpleType;
+import org.apache.flink.statefun.sdk.java.types.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
+import static dk.ku.dms.marketplace.utils.Constants.mapper;
+
 public class ProductFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductFn.class);
 
-    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "product");
-    static final ValueSpec<Product> PRODUCT_STATE = ValueSpec.named("product").withCustomType(Product.TYPE);
+    public static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "product");
+
+    public static final Type<Product> STATE_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "ProductState"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, Product.class));
+
+    public static final ValueSpec<Product> PRODUCT_STATE = ValueSpec.named("product").withCustomType(STATE_TYPE);
 
     //  Contains all the information needed to create a function instance
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
@@ -46,7 +57,7 @@ public class ProductFn implements StatefulFunction {
                 onUpdateProduct(context, message);
             }
             // driver --> product (update price)
-            else if (message.is(ProductMessages.UpdatePrice.TYPE)) {
+            else if (message.is(ProductMessages.UPDATE_PRICE_TYPE)) {
                 onUpdatePrice(context, message);
             }
 
@@ -74,7 +85,7 @@ public class ProductFn implements StatefulFunction {
     }
 
     private void onUpdatePrice(Context context, Message message) {
-        ProductMessages.UpdatePrice updatePrice = message.as(ProductMessages.UpdatePrice.TYPE);
+        ProductMessages.UpdatePrice updatePrice = message.as(ProductMessages.UPDATE_PRICE_TYPE);
         String tid = updatePrice.getInstanceId();
         int sellerId = updatePrice.getSellerId();
         Product product = context.storage().get(PRODUCT_STATE).orElse(null);

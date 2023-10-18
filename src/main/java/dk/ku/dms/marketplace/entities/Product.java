@@ -6,40 +6,29 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import dk.ku.dms.marketplace.utils.Constants;
-import org.apache.flink.statefun.sdk.java.TypeName;
-import org.apache.flink.statefun.sdk.java.types.SimpleType;
-import org.apache.flink.statefun.sdk.java.types.Type;
 
 import java.time.LocalDateTime;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
-
 public class Product {
-    public static final Type<Product> TYPE =
-            SimpleType.simpleImmutableTypeFrom(
-                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "ProductState"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, Product.class));
 
     @JsonProperty("product_id")
-    private int product_id;
+    private final int product_id;
     @JsonProperty("seller_id")
-    private int seller_id;
+    private final int seller_id;
     @JsonProperty("name")
-    private String name;
+    private final String name;
     @JsonProperty("sku")
-    private String sku;
+    private final String sku;
     @JsonProperty("category")
-    private String category;
+    private final String category;
     @JsonProperty("description")
-    private String description;
+    private final String description;
     @JsonProperty("price")
     private float price;
     @JsonProperty("freight_value")
-    private float freight_value;
+    private final float freight_value;
     @JsonProperty("status")
-    private String status = "approved";
+    private final String status = "approved";
     @JsonProperty("version")
     private String version;
 
@@ -63,10 +52,8 @@ public class Product {
                    @JsonProperty("description") String description,
                    @JsonProperty("price") float price,
                    @JsonProperty("freight_value") float freight_value,
-                   @JsonProperty("status") String status,
-                   @JsonProperty("created_at") LocalDateTime createdAt,
-                   @JsonProperty("updated_at") LocalDateTime updatedAt,
-                   @JsonProperty("version") String version) {
+                   @JsonProperty("version") String version
+                  ) {
         this.product_id = product_id;
         this.seller_id = seller_id;
         this.name = name;
@@ -75,14 +62,7 @@ public class Product {
         this.description = description;
         this.price = price;
         this.freight_value = freight_value;
-        this.status = status;
         this.version = version;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @JsonCreator
-    public Product() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -97,6 +77,10 @@ public class Product {
 
     public String getVersion() {
         return version;
+    }
+
+    public float getPrice() {
+        return price;
     }
 
     public void setPrice(float price) {

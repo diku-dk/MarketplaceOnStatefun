@@ -37,14 +37,34 @@ public class TransactionMark {
         this.source = source;
     }
 
+    public String getTid() {
+        return tid;
+    }
+
+    public Enums.TransactionType getType() {
+        return type;
+    }
+
+    public int getActorId() {
+        return actorId;
+    }
+
+    public Enums.MarkStatus getStatus() {
+        return status;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
     @Override
     public String toString() {
-        return "TransactionMark{" +
-                "tid=" + tid +
-                ", type=" + type +
-                ", actorId=" + actorId +
-                ", status=" + status +
-                ", source='" + source + '\'' +
+        return "{" +
+                " \"tid\" : \"" + tid + "\"" +
+                ", \"type\" : \"" + type.toString() + "\"" +
+                ", \"actorId\" : " + actorId +
+                ", \"status\" : \"" + status.toString() + "\"" +
+                ", \"source\" : \"" + source + "\"" +
                 '}';
     }
 }

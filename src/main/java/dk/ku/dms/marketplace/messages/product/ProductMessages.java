@@ -24,20 +24,13 @@ public final class ProductMessages {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, Product.class));
 
-    public static final Type<UpdatePrice> TYPE =
+    public static final Type<UpdatePrice> UPDATE_PRICE_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "UpdatePrice"),
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, UpdatePrice.class));
 
     public final static class UpdatePrice {
-
-
-        public static final Type<UpdatePrice> TYPE =
-                SimpleType.simpleImmutableTypeFrom(
-                        TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "UpdatePrice"),
-                        mapper::writeValueAsBytes,
-                        bytes -> mapper.readValue(bytes, UpdatePrice.class));
 
         @JsonProperty("sellerId")
         private final int sellerId;
