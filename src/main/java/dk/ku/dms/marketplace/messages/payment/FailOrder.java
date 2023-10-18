@@ -1,4 +1,4 @@
-package dk.ku.dms.marketplace.messages.MsgToPaymentFn;
+package dk.ku.dms.marketplace.messages.payment;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

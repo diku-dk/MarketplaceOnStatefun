@@ -10,7 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import java.time.LocalDateTime;
 
 
-public class OrderItem {
+public final class OrderItem {
     @JsonProperty("orderId") private int orderId;
     @JsonProperty("orderItemId") private int orderItemId;
     @JsonProperty("productId") private int productId;
@@ -26,9 +26,6 @@ public class OrderItem {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("shippingLimitDate") private LocalDateTime shippingLimitDate;
-
-    public OrderItem() {
-    }
 
     @JsonCreator
     public OrderItem(@JsonProperty("orderId") int orderId,

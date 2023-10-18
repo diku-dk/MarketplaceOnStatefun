@@ -10,70 +10,68 @@ import dk.ku.dms.marketplace.utils.Enums;
 
 import java.time.LocalDateTime;
 
-
-
-public class Order {
+public final class Order {
 
     @JsonProperty("id")
-    private int id;
+    private final int id;
     @JsonProperty("customerId")
-    private int customerId;
+    private final int customerId;
     @JsonProperty("status")
-    private Enums.OrderStatus status;
+    private final Enums.OrderStatus status;
+
     @JsonProperty("invoiceNumber")
-    private String invoiceNumber;
+    private final String invoiceNumber;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("purchaseTimestamp")
-    private LocalDateTime purchaseTimestamp;
+    private final LocalDateTime purchaseTimestamp;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("created_at")
-    private LocalDateTime created_at;
+    private final LocalDateTime created_at;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("updated_at")
-    private LocalDateTime updated_at;
+    private final LocalDateTime updated_at;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("paymentDate")
-    private LocalDateTime paymentDate;
+    private final LocalDateTime paymentDate;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("delivered_carrier_date")
-    private LocalDateTime delivered_carrier_date;
+    private final LocalDateTime delivered_carrier_date;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("delivered_customer_date")
-    private LocalDateTime delivered_customer_date;
+    private final LocalDateTime delivered_customer_date;
 
     // dev
     @JsonProperty("countItems")
-    private int countItems;
+    private final int countItems;
     @JsonProperty("totalAmount")
-    private float totalAmount;
+    private final float totalAmount;
     @JsonProperty("totalFreight")
-    private float totalFreight;
+    private final float totalFreight;
     @JsonProperty("totalIncentive")
-    private float totalIncentive;
+    private final float totalIncentive;
     @JsonProperty("totalInvoice")
-    private float totalInvoice;
+    private final float totalInvoice;
     @JsonProperty("totalItems")
-    private float totalItems;
+    private final float totalItems;
     @JsonProperty("data")
-    private String data;
+    private final String data;
 
     @JsonCreator
-    public Order() {
-    }
-
-    public Order(int id, int customerId, Enums.OrderStatus status, String invoiceNumber, LocalDateTime purchaseTimestamp, LocalDateTime created_at, LocalDateTime updated_at, LocalDateTime paymentDate, LocalDateTime delivered_carrier_date, LocalDateTime delivered_customer_date, int countItems, float totalAmount, float totalFreight, float totalIncentive, float totalInvoice, float totalItems, String data) {
+    public Order(int id, int customerId, Enums.OrderStatus status, String invoiceNumber, LocalDateTime purchaseTimestamp,
+                 LocalDateTime created_at, LocalDateTime updated_at, LocalDateTime paymentDate, LocalDateTime delivered_carrier_date,
+                 LocalDateTime delivered_customer_date, int countItems, float totalAmount, float totalFreight, float totalIncentive, float totalInvoice, float totalItems, String data) {
         this.id = id;
         this.customerId = customerId;
         this.status = status;
@@ -99,5 +97,9 @@ public class Order {
 
     public float getTotalInvoice() {
         return totalInvoice;
+    }
+
+    public String getInvoiceNumber() {
+        return invoiceNumber;
     }
 }

@@ -29,7 +29,7 @@ public final class ProductFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductFn.class);
 
-    public static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "product");
+    public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/product");
 
     public static final Type<Product> STATE_TYPE =
             SimpleType.simpleImmutableTypeFrom(

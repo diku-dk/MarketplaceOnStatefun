@@ -57,7 +57,6 @@ public final class CartState {
         this.updatedAt = LocalDateTime.now();
     }
 
-    @JsonIgnore
     public void seal() {
         this.items.clear();
         this.status = Status.OPEN;

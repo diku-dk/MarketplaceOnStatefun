@@ -29,7 +29,6 @@ public class TransactionMark {
                            @JsonProperty("status") Enums.MarkStatus status,
                            @JsonProperty("source") String source
     ) {
-
         this.tid = tid;
         this.type = type;
         this.actorId = actorId;

@@ -29,7 +29,7 @@ public final class StockFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(StockFn.class);
 
-    public static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "stock");
+    public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/stock");
 
     public static final ValueSpec<StockItem> STOCK_STATE = ValueSpec.named("stock").withCustomType(StockItem.TYPE);
 

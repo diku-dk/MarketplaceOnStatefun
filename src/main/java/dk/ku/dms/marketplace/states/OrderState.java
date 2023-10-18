@@ -1,12 +1,12 @@
 package dk.ku.dms.marketplace.states;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ku.dms.marketplace.entities.Order;
 import dk.ku.dms.marketplace.entities.OrderHistory;
 import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.utils.Constants;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
@@ -24,57 +24,42 @@ public class OrderState {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, OrderState.class));
 
-    @JsonProperty("orders")
-    public Map<Integer, Order> orders = new HashMap<>();
+    @JsonProperty("checkouts")
+    private final Map<Integer, CheckoutRequest> checkouts;
 
-    // 集合
+    @JsonProperty("orders")
+    private final Map<Integer, Order> orders;
+
     @JsonProperty("orderItems")
-    public Set<OrderItem> orderItems = new HashSet<>();
+    private final Map<Integer, List<OrderItem>> orderItems;
 
     @JsonProperty("orderHistory")
-    public TreeMap<Integer, List<OrderHistory>> orderHistory = new TreeMap<>();
+    private final Map<Integer, List<OrderHistory>> orderHistory;
 
-    @JsonProperty("customerOrderID")
-    public Map<Integer, Integer> customerOrderID = new HashMap<>();
-
-    @JsonIgnore
-    public void addOrder(int orderId, Order order) {
-        orders.put(orderId, order);
-    }
-
-    @JsonIgnore
-    public int generateCustomerNextOrderID(int customerId) {
-        if (!customerOrderID.containsKey(customerId)) {
-            customerOrderID.put(customerId, 1);
-            return 1;
-        } else {
-            int newId = customerOrderID.get(customerId) + 1;
-            customerOrderID.put(customerId, newId);
-            return newId;
-        }
-    }
-
-    @JsonIgnore
-    public void addOrderHistory(int orderId, OrderHistory orderHistory) {
-        if (this.orderHistory.containsKey(orderId)) {
-            this.orderHistory.get(orderId).add(orderHistory);
-        } else {
-            List<OrderHistory> historyList = new ArrayList<>();
-            historyList.add(orderHistory);
-            this.orderHistory.put(orderId, historyList);
-        }
-    }
-
-    @JsonIgnore
-    public void addOrderItem(OrderItem orderItem) {
-        orderItems.add(orderItem);
-    }
-
-    @JsonCreator
     public OrderState() {
+        this.checkouts = new HashMap<>();
+        this.orders = new HashMap<>();
+        this.orderItems = new HashMap<>();
+        this.orderHistory = new HashMap<>();
     }
 
+    @JsonIgnore
     public Map<Integer, Order> getOrders() {
         return orders;
+    }
+
+    @JsonIgnore
+    public Map<Integer, CheckoutRequest> getCheckouts() {
+        return checkouts;
+    }
+
+    @JsonIgnore
+    public Map<Integer, List<OrderItem>> getOrderItems() {
+        return orderItems;
+    }
+
+    @JsonIgnore
+    public Map<Integer, List<OrderHistory>> getOrderHistory() {
+        return orderHistory;
     }
 }

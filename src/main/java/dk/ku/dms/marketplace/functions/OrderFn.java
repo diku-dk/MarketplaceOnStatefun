@@ -1,15 +1,30 @@
 package dk.ku.dms.marketplace.functions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.ku.dms.marketplace.entities.CartItem;
+import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
+import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
+import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
+import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
+import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
+import dk.ku.dms.marketplace.messages.stock.StockMessages;
+import dk.ku.dms.marketplace.states.OrderState;
+import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.Context;
 import org.apache.flink.statefun.sdk.java.StatefulFunction;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.ValueSpec;
 import org.apache.flink.statefun.sdk.java.message.Message;
+import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class OrderFn implements StatefulFunction {
@@ -19,15 +34,15 @@ public class OrderFn implements StatefulFunction {
     public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/order");
 
     // generate unique Identifier
-    static final ValueSpec<Integer> ORDERIDSTATE = ValueSpec.named("orderId").withIntType();
-    static final ValueSpec<Integer> ORDERHISTORYIDSTATE = ValueSpec.named("orderHistoryId").withIntType();
+    public static final ValueSpec<Integer> NEXT_ORDER_ID_STATE = ValueSpec.named("nextOrderId").withIntType();
+    // static final ValueSpec<Integer> ORDERHISTORYIDSTATE = ValueSpec.named("orderHistoryId").withIntType();
     // store checkout info
 //    static final ValueSpec<CustomerCheckoutInfoState> TEMPCKINFOSTATE = ValueSpec.named("tempCKInfoState").withCustomType(CustomerCheckoutInfoState.TYPE);
 //    // tmp store async task state
 //    static final ValueSpec<ReserveStockTaskState> ASYNCTASKSTATE = ValueSpec.named("asyncTaskState").withCustomType(ReserveStockTaskState.TYPE);
 //
 //    // store order info
-//    static final ValueSpec<OrderState> ORDERSTATE = ValueSpec.named("orderState").withCustomType(OrderState.TYPE);
+    public static final ValueSpec<OrderState> ORDER_STATE = ValueSpec.named("order").withCustomType(OrderState.TYPE);
 
 //    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
 //            .withValueSpecs(ORDERIDSTATE, ASYNCTASKSTATE, TEMPCKINFOSTATE, ORDERSTATE, ORDERHISTORYIDSTATE)
@@ -51,14 +66,14 @@ public class OrderFn implements StatefulFunction {
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
-//            // cart --> order, (checkout request)
-//            if (message.is(Checkout.TYPE)) {
-//                ReserveStockAsync(context, message);
-//            }
-//            // stock --> order, (checkout response)
-//            else if (message.is(AttemptReservationEvent.TYPE)) {
-//                ReserveStockResult(context, message);
-//            }
+            // cart --> order, (checkout request)
+            if (message.is(OrderMessages.CHECKOUT_REQUEST_TYPE)) {
+                ReserveStockAsync(context, message);
+            }
+            // stock --> order, (checkout response)
+            else if (message.is(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE)) {
+                ReserveStockResult(context, message);
+            }
 //            // xxxx ---> order (update order status)
 //            else if (message.is(PaymentNotification.TYPE)) {
 //                PaymentNotification info = message.as(PaymentNotification.TYPE);
@@ -73,8 +88,7 @@ public class OrderFn implements StatefulFunction {
 //                onCleanup(context);
 //            }
         } catch (Exception e) {
-            System.out.println("OrderFn error: !!!!!!!!!!!!" + e.getMessage());
-            e.printStackTrace();
+            LOG.error("OrderFn error: !!!!!!!!!!!!" + e.getMessage());
         }
         return context.done();
     }
@@ -91,16 +105,16 @@ public class OrderFn implements StatefulFunction {
 //        return context.storage().get(TEMPCKINFOSTATE).orElse(new CustomerCheckoutInfoState());
 //    }
 //
-//    private OrderState getOrderState(Context context) {
-//        return context.storage().get(ORDERSTATE).orElse(new OrderState());
-//    }
+    private OrderState getOrderState(Context context) {
+        return context.storage().get(ORDER_STATE).orElse(new OrderState());
+    }
 //
-//    private int generateNextOrderID(Context context) {
-//        int nextId = context.storage().get(ORDERIDSTATE).orElse(0) + 1;
-//        context.storage().set(ORDERIDSTATE, nextId);
-//        // different partitionId may have same orderId, so we add partitionId number at beginning
-//        return nextId;
-//    }
+    private int generateNextOrderID(Context context) {
+        int nextId = context.storage().get(NEXT_ORDER_ID_STATE).orElse(0) + 1;
+        context.storage().set(NEXT_ORDER_ID_STATE, nextId);
+        // different partitionId may have same orderId, so we add partitionId number at beginning
+        return nextId;
+    }
 //
 //    private int generateNextOrderHistoryID(Context context) {
 //        int nextId = context.storage().get(ORDERHISTORYIDSTATE).orElse(0) + 1;
@@ -114,118 +128,109 @@ public class OrderFn implements StatefulFunction {
 //    Attemp/Confirm/Cance  Reservation (two steps business logic)【send message to stock】
 //    ====================================================================================
 
-//    private void ReserveStockAsync(Context context, Message message) {
-//
-//        // get state and message
-//        ReserveStockTaskState resvTask_State = getAtptResvTaskState(context);
-//        CustomerCheckoutInfoState customerCkoutInfo_State = getTempCKInfoState(context);
-//        Checkout checkout = message.as(Checkout.TYPE);
-//        // get fields
-//        Map<Integer, CartItem> items = checkout.getItems();
-//        int customerId = checkout.getCustomerCheckout().getCustomerId();
-//        int nItems = items.size();
-//
-//        // change state
-//        customerCkoutInfo_State.addCheckout(customerId, checkout);
-//        resvTask_State.addNewTask(customerId, nItems);
-//        // save state
-//        context.storage().set(ASYNCTASKSTATE, resvTask_State);
-//        context.storage().set(TEMPCKINFOSTATE, customerCkoutInfo_State);
-//
-//        // send message to stock
-//        for (Map.Entry<Integer, CartItem> entry : items.entrySet()) {
-//            int stockPartitionId = (int) (entry.getValue().getProductId());
-//            Utils.sendMessage(context,
-//                    StockFn.TYPE,
-//                    String.valueOf(stockPartitionId),
-//                    AttemptReservationEvent.TYPE,
-//                    new AttemptReservationEvent(
-//                            customerId,
-//                            entry.getValue(),
-//                            Enums.ItemStatus.UNKNOWN));
-//        }
-//    }
+    private void ReserveStockAsync(Context context, Message message) {
 
+        CheckoutRequest checkoutRequest = message.as(OrderMessages.CHECKOUT_REQUEST_TYPE);
+
+        int orderId = generateNextOrderID(context);
+
+        OrderState orderState = getOrderState(context);
+
+        orderState.getCheckouts().put(orderId, checkoutRequest);
+
+        // send message to stock
+        for (CartItem item : checkoutRequest.getItems()) {
+            AttemptReservationEvent attemptReservationEvent = new AttemptReservationEvent(orderId, item);
+            Message attemptReservationMsg =
+                    MessageBuilder.forAddress(StockFn.TYPE, String.valueOf(item.getSellerId())+'/'+item.getProductId())
+                            .withCustomType(StockMessages.ATTEMPT_RESERVATION_TYPE, attemptReservationEvent)
+                            .build();
+            context.send(attemptReservationMsg);
+        }
+
+        context.storage().set(ORDER_STATE, orderState);
+
+    }
 
 //    ====================================================================================
-//                  handle checkout response 【receive message from stock】
+//            handle attempt reservation response 【receive message from stock】
 //    ====================================================================================
-//    private void ReserveStockResult(Context context, Message message) {
-//
-//        // get state and message
-//        AttemptReservationEvent reserveStockEvent = message.as(AttemptReservationEvent.TYPE);
-//        ReserveStockTaskState resvTask_State = getAtptResvTaskState(context);
-//
-//        // get fields
-//        int customerId = reserveStockEvent.getCustomerId();
-//
-//        // change state
-//        resvTask_State.addCompletedSubTask(customerId, reserveStockEvent);
-//
-//        // when all sub-tasks are completed
-//        boolean isTaskComplete = resvTask_State.isTaskComplete(customerId);
-//        if (isTaskComplete) {
-//            // get state
-//            CustomerCheckoutInfoState customerCheckoutInfoState = getTempCKInfoState(context);
-//
-//            // get fields
-//            Checkout checkout = customerCheckoutInfoState.getSingleCheckout(customerId);
-//            Map<Integer, CartItem> itemsSuccessResv = resvTask_State.getSingleSuccessResvItems(customerId);
-//            Map<Integer, CartItem> itemsFailedResv = resvTask_State.getSingleFailedResvItems(customerId);;
-//            Checkout checkoutSuccess = new Checkout(checkout.getCreatedAt(), checkout.getCustomerCheckout(), itemsSuccessResv);
-//            Checkout checkoutFailed = new Checkout(checkout.getCreatedAt(), checkout.getCustomerCheckout(), itemsFailedResv);
-//
-//            if (itemsSuccessResv.size() == 0) {
-//                int tid = checkout.getCustomerCheckout().getInstanceId();
-//                // all the items are unavailable, send transaction mark to driver, notify customer
-//                Utils.notifyTransactionComplete(context,
-//                        Enums.TransactionType.CUSTOMER_SESSION.toString(),
-//                        String.valueOf(customerId),
-//                        customerId,
-//                        tid,
-//                        String.valueOf(customerId),
-//                        Enums.MarkStatus.NOT_ACCEPTED,
-//                        "order");
-////                logger.info("[success] {tid=" + tid + "} checkout (fail), orderFn " + context.self().id());
-//                String log_ = getPartionText(context.self().id())
-//                        + "checkout fail, " + "tid : " + tid + "\n";
-//                printLog(log_);
-//
-//                Utils.sendMessage(context,
-//                        CustomerFn.TYPE,
-//                        String.valueOf(customerId),
-//                        NotifyCustomer.TYPE,
-//                        new NotifyCustomer(customerId, null, Enums.NotificationType.notify_fail_checkout));
-//            } else {
-//                // notify the customer the failed items,
-//                Utils.sendMessage(context,
-//                        CustomerFn.TYPE,
-//                        String.valueOf(customerId),
-//                        Types.stringType(),
-//                        checkoutFailed.toString()
-//                        );
-//
-//                // generate order accoring to the success items , and send order to paymentFn
-//                generateOrder(context, checkoutSuccess);
-//            }
-//
-//            // change state
-//            customerCheckoutInfoState.removeSingleCheckout(customerId);
-//            resvTask_State.removeTask(customerId);
-//
-//            // save state
-//            context.storage().set(TEMPCKINFOSTATE, customerCheckoutInfoState);
-//        }
-//        // HAVE TO PUT HERE
-//        context.storage().set(ASYNCTASKSTATE, resvTask_State);
-//    }
+    private void ReserveStockResult(Context context, Message message) {
+
+        AttemptReservationResponse resp = message.as(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE);
+
+        if(resp.getStatus() != Enums.ItemStatus.IN_STOCK){
+            return;
+        }
+
+        int orderId = resp.getOrderId();
+
+        OrderState orderState = getOrderState(context);
+
+        CheckoutRequest checkoutRequest = orderState.getCheckouts().get(orderId);
+
+        // CartItem item = checkoutRequest.getItems().stream().filter(p-> p.getSellerId() == resp.getSellerId() && p.getProductId() == resp.getProductId()).findFirst().get();
+        int idx = 0;
+        CartItem item = null;
+        for(CartItem p : checkoutRequest.getItems()){
+            if(p.getSellerId() == resp.getSellerId() && p.getProductId() == resp.getProductId()){
+                item = p;
+                break;
+            }
+            idx++;
+        }
+
+        if(item == null) {
+            LOG.error("Cart item not found!");
+            return;
+        }
+        checkoutRequest.getItems().remove(idx);
+
+        List<OrderItem> orderItems = orderState.getOrderItems().computeIfAbsent(orderId, k -> new ArrayList<>());
+
+        float totalPrice = item.getUnitPrice() * item.getQuantity();
+        OrderItem orderItem = new OrderItem(orderId, orderItems.size() + 1, item.getProductId(), item.getProductName(), item.getSellerId(), item.getUnitPrice(), item.getFreightValue(), item.getQuantity(), totalPrice,
+                totalPrice - item.getVoucher(), LocalDateTime.now().plusDays(1) );
+
+        orderItems.add(orderItem);
+
+        if(checkoutRequest.getItems().size() == 0){
+            generateOrder(context, checkoutRequest, orderState, orderId);
+        }
+
+        context.storage().set(ORDER_STATE, orderState);
+    }
 
 //    =================================================================================
 //    After we handle the confirmation or cancellation of an order with stockFn,
 //    Handing over to paymentFn for processing.
 //    =================================================================================
 
-//    private void generateOrder(Context context, Checkout successCheckout) {
+    private void generateOrder(Context context, CheckoutRequest checkoutRequest, OrderState orderState, int orderId) {
+
+        List<OrderItem> items =  orderState.getOrderItems().get(orderId);
+
+        // TODO build order
+        // Order order = orderState.getOrders().get(orderId);
+
+        InvoiceIssued invoiceIssued = new InvoiceIssued(
+                checkoutRequest.getCustomerCheckout(),
+                orderId,
+                // order.getInvoiceNumber(),
+                "",
+                items,
+                // order.getTotalInvoice(),
+                0,
+                LocalDateTime.now(),
+                checkoutRequest.getInstanceId() );
+
+        Message invoiceIssuedMsg =
+                MessageBuilder.forAddress(StockFn.TYPE, context.self().id())
+                        .withCustomType(PaymentMessages.INVOICE_ISSUED_TYPE, invoiceIssued)
+                        .build();
+
+        context.send(invoiceIssuedMsg);
+
 //        int orderId = generateNextOrderID(context);
 //        Map<Integer, CartItem> items = successCheckout.getItems();
 //
@@ -394,7 +399,7 @@ public class OrderFn implements StatefulFunction {
 //                    InvoiceIssued.TYPE,
 //                    new InvoiceIssued(sellerInvoice, successCheckout.getCustomerCheckout().getInstanceId()));
 //        }
-//    }
+    }
 //
 //    private void ProcessShipmentNotification(Context context, Message message) throws SQLException, JsonProcessingException {
 //

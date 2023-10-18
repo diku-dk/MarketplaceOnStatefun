@@ -141,7 +141,6 @@ public class StockTest {
         // set initial state
         context.storage().set(StockFn.STOCK_STATE, stockItem);
 
-
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "1");
         AttemptReservationEvent event = new AttemptReservationEvent(1,item);
 

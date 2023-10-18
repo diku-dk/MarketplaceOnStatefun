@@ -15,7 +15,7 @@ public final class AttemptReservationEvent {
 
     @JsonCreator
     public AttemptReservationEvent(@JsonProperty("orderId") int orderId,
-                               @JsonProperty("cartItem") CartItem cartItem)
+                                    @JsonProperty("cartItem") CartItem cartItem)
     {
         this.orderId = orderId;
         this.cartItem = cartItem;

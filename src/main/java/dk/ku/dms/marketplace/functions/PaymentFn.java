@@ -1,28 +1,18 @@
-//package dk.ku.dms.marketplace.functions;
+package dk.ku.dms.marketplace.functions;
+
+import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.message.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
+
 //
-//import dk.ku.dms.marketplace.common.entity.*;
-//import dk.ku.dms.marketplace.common.utils.Utils;
-//import dk.ku.dms.marketplace.constants.Constants;
-//import dk.ku.dms.marketplace.constants.Enums;
-//import dk.ku.dms.marketplace.types.MsgToCustomer.NotifyCustomer;
-//import dk.ku.dms.marketplace.types.MsgToOrderFn.PaymentNotification;
-//import dk.ku.dms.marketplace.types.MsgToPaymentFn.InvoiceIssued;
-//import dk.ku.dms.marketplace.types.MsgToShipment.ProcessShipment;
-//import dk.ku.dms.marketplace.types.MsgToStock.ConfirmStockEvent;
-//import dk.ku.dms.marketplace.types.State.PaymentState;
-//import org.apache.flink.statefun.sdk.java.*;
-//import org.apache.flink.statefun.sdk.java.message.Message;
-//import java.time.LocalDateTime;
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.concurrent.CompletableFuture;
-//import java.util.logging.Logger;
-//
-//public class PaymentFn implements StatefulFunction {
-//
-//    Logger logger = Logger.getLogger("PaymentFn");
-//
-//    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "payment");
+public class PaymentFn implements StatefulFunction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PaymentFn.class);
+
+    public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/payment");
 //
 //    static final ValueSpec<PaymentState> PAYMENT_STATE = ValueSpec.named("paymentState").withCustomType(PaymentState.TYPE);
 //
@@ -33,8 +23,9 @@
 //
 ////    PaymentService paymentService = new DummyPaymentServiceService();
 //
-//    @Override
-//    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
+    @Override
+    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
+        LOG.info("Payment "+context.self().id()+" received!");
 //        try {
 //            // stock --> payment (request to payment)
 //            if (message.is(InvoiceIssued.TYPE)) {
@@ -44,8 +35,8 @@
 //            System.out.println("PaymentFn Exception !!!!!!!!!!!!!!!!");
 //            e.printStackTrace();
 //        }
-//        return context.done();
-//    }
+        return context.done();
+    }
 //
 ////    ========================================================================
 ////                             helper functions
@@ -239,4 +230,4 @@
 //    private void printLog(String log) {
 //        System.out.println(log);
 //    }
-//}
+}
