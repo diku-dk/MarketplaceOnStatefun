@@ -1,13 +1,13 @@
 package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.entities.Product;
+import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.StockItem;
 import dk.ku.dms.marketplace.entities.TransactionMark;
-import dk.ku.dms.marketplace.functions.CartFn;
-import dk.ku.dms.marketplace.functions.ProductFn;
+import dk.ku.dms.marketplace.functions.OrderFn;
 import dk.ku.dms.marketplace.functions.StockFn;
-import dk.ku.dms.marketplace.messages.product.ProductMessages;
+import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.utils.Enums;
@@ -43,7 +43,7 @@ public class StockTest {
         function.apply(context, message);
 
         // Assert State
-        assert(context.storage().get(StockFn.STOCK_STATE).get().getVersion().contentEquals("1"));
+        assert(context.storage().get(StockFn.STOCK_STATE).isPresent() && context.storage().get(StockFn.STOCK_STATE).get().getVersion().contentEquals("1"));
     }
 
     @Test
@@ -51,9 +51,8 @@ public class StockTest {
 
         // Arrange
         Address self = new Address(StockFn.TYPE, "1/1");
-        Address caller = new Address(CartFn.TYPE, "1/1");
 
-        TestContext context = TestContext.forTargetWithCaller(self, caller);
+        TestContext context = TestContext.forTarget(self);
 
         StockItem stockItem = new StockItem(1,1,10, 0,
                 0, 1, "test",  "1");
@@ -84,7 +83,45 @@ public class StockTest {
         assert(mark.getTid().compareTo("2") == 0);
 
         // Assert State
-        assert(context.storage().get(StockFn.STOCK_STATE).get().getVersion().contentEquals("2"));
+        assert(context.storage().get(StockFn.STOCK_STATE).isPresent() && context.storage().get(StockFn.STOCK_STATE).get().getVersion().contentEquals("2"));
+    }
+
+    @Test
+    public void testFailedAttemptReservation() throws Throwable {
+
+        // Arrange
+        Address self = new Address(StockFn.TYPE, "1/1");
+        Address caller = new Address(OrderFn.TYPE, "1");
+
+        TestContext context = TestContext.forTargetWithCaller(self, caller);
+
+        StockItem stockItem = new StockItem(1,1,10, 0,
+                0, 1, "test",  "1");
+
+        // set initial state
+        context.storage().set(StockFn.STOCK_STATE, stockItem);
+
+
+        CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "2");
+        AttemptReservationEvent event = new AttemptReservationEvent(1,item);
+
+        // Action
+        StockFn function = new StockFn();
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(StockMessages.ATTEMPT_RESERVATION_TYPE, event)
+                .build();
+
+        function.apply(context, message);
+
+        List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
+
+        assert (sentMessages.size() == 1);
+
+        assert(sentMessages.get(0).message().is(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE));
+
+        OrderMessages.AttemptReservationResponse resp = sentMessages.get(0).message().as(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE);
+        assert (resp.getStatus() == Enums.ItemStatus.UNAVAILABLE);
 
     }
 

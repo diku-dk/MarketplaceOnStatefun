@@ -1,57 +1,41 @@
-//package dk.ku.dms.marketplace.functions;
-//
-//import dk.ku.dms.marketplace.common.entity.*;
-//import dk.ku.dms.marketplace.common.utils.PostgreHelper;
-//import dk.ku.dms.marketplace.common.utils.Utils;
-//import dk.ku.dms.marketplace.constants.Constants;
-//import dk.ku.dms.marketplace.constants.Enums;
-//import dk.ku.dms.marketplace.types.MsgToCustomer.NotifyCustomer;
-//import dk.ku.dms.marketplace.types.MsgToOrderFn.PaymentNotification;
-//import dk.ku.dms.marketplace.types.MsgToOrderFn.ShipmentNotification;
-//import dk.ku.dms.marketplace.types.MsgToPaymentFn.InvoiceIssued;
-//import dk.ku.dms.marketplace.types.MsgToStock.AttemptReservationEvent;
-//import dk.ku.dms.marketplace.types.State.ReserveStockTaskState;
-//import dk.ku.dms.marketplace.types.State.OrderState;
-//import dk.ku.dms.marketplace.types.State.CustomerCheckoutInfoState;
-//import com.fasterxml.jackson.core.JsonProcessingException;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import org.apache.flink.statefun.sdk.java.*;
-//import org.apache.flink.statefun.sdk.java.message.Message;
-//import org.apache.flink.statefun.sdk.java.types.Types;
-//
-//import java.sql.Connection;
-//import java.sql.SQLException;
-//import java.sql.Statement;
-//import java.time.LocalDateTime;
-//import java.util.*;
-//import java.util.concurrent.CompletableFuture;
-//import java.util.logging.Logger;
-//
-//public class OrderFn implements StatefulFunction {
-//    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "order");
-//
-//    Logger logger = Logger.getLogger("OrderFn");
-//
-//    // generate unique Identifier
-//    static final ValueSpec<Integer> ORDERIDSTATE = ValueSpec.named("orderId").withIntType();
-//    static final ValueSpec<Integer> ORDERHISTORYIDSTATE = ValueSpec.named("orderHistoryId").withIntType();
-//    // store checkout info
+package dk.ku.dms.marketplace.functions;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.ku.dms.marketplace.utils.Constants;
+import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.message.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.util.concurrent.CompletableFuture;
+
+public class OrderFn implements StatefulFunction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(OrderFn.class);
+
+    public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/order");
+
+    // generate unique Identifier
+    static final ValueSpec<Integer> ORDERIDSTATE = ValueSpec.named("orderId").withIntType();
+    static final ValueSpec<Integer> ORDERHISTORYIDSTATE = ValueSpec.named("orderHistoryId").withIntType();
+    // store checkout info
 //    static final ValueSpec<CustomerCheckoutInfoState> TEMPCKINFOSTATE = ValueSpec.named("tempCKInfoState").withCustomType(CustomerCheckoutInfoState.TYPE);
 //    // tmp store async task state
 //    static final ValueSpec<ReserveStockTaskState> ASYNCTASKSTATE = ValueSpec.named("asyncTaskState").withCustomType(ReserveStockTaskState.TYPE);
 //
 //    // store order info
 //    static final ValueSpec<OrderState> ORDERSTATE = ValueSpec.named("orderState").withCustomType(OrderState.TYPE);
-//
+
 //    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
 //            .withValueSpecs(ORDERIDSTATE, ASYNCTASKSTATE, TEMPCKINFOSTATE, ORDERSTATE, ORDERHISTORYIDSTATE)
 //            .withSupplier(OrderFn::new)
 //            .build();
-//
-//    private static Connection conn;
-//
-//    private final ObjectMapper objectMapper = new ObjectMapper();
-//
+
+    private static Connection conn;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
 //    static {
 //        try {
 //            conn = PostgreHelper.getConnection();
@@ -61,10 +45,10 @@
 //            e.printStackTrace();
 //        }
 //    }
-//
-//    @Override
-//    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
-//        try {
+
+    @Override
+    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
+        try {
 //            // cart --> order, (checkout request)
 //            if (message.is(Checkout.TYPE)) {
 //                ReserveStockAsync(context, message);
@@ -82,21 +66,21 @@
 //            {
 //                ProcessShipmentNotification(context, message);
 //            }
-////            else if (message.is(Cleanup.TYPE))
-////            {
-////                onCleanup(context);
-////            }
-//        } catch (Exception e) {
-//            System.out.println("OrderFn error: !!!!!!!!!!!!" + e.getMessage());
-//            e.printStackTrace();
-//        }
-//        return context.done();
-//    }
-//
-////    ===============================================================================
-////                                  helper functions
-////    ===============================================================================
-//
+//            else if (message.is(Cleanup.TYPE))
+//            {
+//                onCleanup(context);
+//            }
+        } catch (Exception e) {
+            System.out.println("OrderFn error: !!!!!!!!!!!!" + e.getMessage());
+            e.printStackTrace();
+        }
+        return context.done();
+    }
+
+//    ===============================================================================
+//                                  helper functions
+//    ===============================================================================
+
 //    private ReserveStockTaskState getAtptResvTaskState(Context context) {
 //        return context.storage().get(ASYNCTASKSTATE).orElse(new ReserveStockTaskState());
 //    }
@@ -121,25 +105,13 @@
 //        context.storage().set(ORDERHISTORYIDSTATE, nextId);
 //        return nextId;
 //    }
-//
-//    private String getPartionText(String id) {
-//        return String.format("[ OrderFn partitionId %s ] ", id);
-//    }
-//
-//    private void showLog(String log) {
-//        logger.info(log);
-////        System.out.println(log);
-//    }
-//
-//    private void showLogPrt(String log) {
-////        logger.info(log);
-//        System.out.println(log);
-//    }
-//
-////    ====================================================================================
-////    Attemp/Confirm/Cance  Reservation (two steps business logic)【send message to stock】
-////    ====================================================================================
-//
+
+
+
+//    ====================================================================================
+//    Attemp/Confirm/Cance  Reservation (two steps business logic)【send message to stock】
+//    ====================================================================================
+
 //    private void ReserveStockAsync(Context context, Message message) {
 //
 //        // get state and message
@@ -171,14 +143,11 @@
 //                            Enums.ItemStatus.UNKNOWN));
 //        }
 //    }
-//
-//
-////    ====================================================================================
-////                  handle checkout response 【receive message from stock】
-////    ====================================================================================
-//    private void printLog(String log) {
-//        System.out.println(log);
-//    }
+
+
+//    ====================================================================================
+//                  handle checkout response 【receive message from stock】
+//    ====================================================================================
 //    private void ReserveStockResult(Context context, Message message) {
 //
 //        // get state and message
@@ -248,12 +217,12 @@
 //        // HAVE TO PUT HERE
 //        context.storage().set(ASYNCTASKSTATE, resvTask_State);
 //    }
-//
-////    =================================================================================
-////    After we handle the confirmation or cancellation of an order with stockFn,
-////    Handing over to paymentFn for processing.
-////    =================================================================================
-//
+
+//    =================================================================================
+//    After we handle the confirmation or cancellation of an order with stockFn,
+//    Handing over to paymentFn for processing.
+//    =================================================================================
+
 //    private void generateOrder(Context context, Checkout successCheckout) {
 //        int orderId = generateNextOrderID(context);
 //        Map<Integer, CartItem> items = successCheckout.getItems();
@@ -519,4 +488,4 @@
 //                + "update order status, orderId: " + orderId + ", oldStatus: " + oldStatus + ", newStatus: " + status + "\n";
 ////        showLog(log);
 //    }
-//}
+}

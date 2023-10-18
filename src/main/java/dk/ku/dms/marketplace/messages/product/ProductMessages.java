@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.messages.product;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dk.ku.dms.marketplace.entities.Product;
 import dk.ku.dms.marketplace.utils.Constants;
@@ -30,7 +31,7 @@ public final class ProductMessages {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, UpdatePrice.class));
 
-    public final static class UpdatePrice {
+    public static final class UpdatePrice {
 
         @JsonProperty("sellerId")
         private final int sellerId;
@@ -52,18 +53,22 @@ public final class ProductMessages {
             this.instanceId = instanceId;
         }
 
+        @JsonIgnore
         public int getSellerId() {
             return sellerId;
         }
 
+        @JsonIgnore
         public int getProductId() {
             return productId;
         }
 
+        @JsonIgnore
         public float getPrice() {
             return price;
         }
 
+        @JsonIgnore
         public String getInstanceId() {
             return instanceId;
         }

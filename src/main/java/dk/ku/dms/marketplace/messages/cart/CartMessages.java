@@ -10,7 +10,7 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
-public class CartMessages {
+public final class CartMessages {
 
     public static final Type<Seal> SEAL_TYPE =
             SimpleType.simpleImmutableTypeFrom(
@@ -30,7 +30,7 @@ public class CartMessages {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, CustomerCheckout.class));
 
-    public static class Seal {
+    public static final class Seal {
 
         @JsonCreator
         public Seal() {

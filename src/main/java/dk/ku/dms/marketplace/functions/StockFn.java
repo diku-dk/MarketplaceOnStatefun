@@ -6,6 +6,7 @@ import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.StockItem;
 import dk.ku.dms.marketplace.entities.TransactionMark;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.PaymentStockEvent;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
@@ -106,8 +107,9 @@ public final class StockFn implements StatefulFunction {
     }
 
     private void onAttemptReservation(Context context, Message message) {
-        CartItem cartItem = message.as(StockMessages.ATTEMPT_RESERVATION_TYPE);
 
+        AttemptReservationEvent attemptReservationEvent = message.as(StockMessages.ATTEMPT_RESERVATION_TYPE);
+        CartItem cartItem = attemptReservationEvent.getCartItem();
         int productId = cartItem.getProductId();
         int quantity = cartItem.getQuantity();
         String version = cartItem.getVersion();
@@ -117,7 +119,7 @@ public final class StockFn implements StatefulFunction {
         final Optional<Address> caller = context.caller();
         if (caller.isPresent()) {
             OrderMessages.AttemptReservationResponse resp =
-                    new OrderMessages.AttemptReservationResponse(cartItem.getSellerId(), productId, status);
+                    new OrderMessages.AttemptReservationResponse(attemptReservationEvent.getOrderId(), cartItem.getSellerId(), productId, status);
             final Message request = MessageBuilder.forAddress(StockFn.TYPE, caller.get().id())
                                                     .withCustomType(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE, resp)
                                                     .build();
@@ -135,11 +137,11 @@ public final class StockFn implements StatefulFunction {
             return Enums.ItemStatus.UNKNOWN;
         }
 
-        if (stockItem.getVersion().compareTo(version) == 0) {
+        if (stockItem.getVersion().compareTo(version) != 0) {
             return Enums.ItemStatus.UNAVAILABLE;
         }
 
-        if (stockItem.getQtyAvailable() - stockItem.getQtyReserved() < quantity) {
+        if (stockItem.getQtyReserved() + quantity > stockItem.getQtyAvailable()) {
             return Enums.ItemStatus.OUT_OF_STOCK;
         }
 

@@ -1,6 +1,5 @@
 package dk.ku.dms.marketplace.messages.stock;
 
-import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.StockItem;
 import dk.ku.dms.marketplace.utils.Constants;
 import org.apache.flink.statefun.sdk.java.TypeName;
@@ -11,11 +10,11 @@ import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
 public class StockMessages {
 
-    public static final Type<CartItem> ATTEMPT_RESERVATION_TYPE =
+    public static final Type<AttemptReservationEvent> ATTEMPT_RESERVATION_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "AttemptReservation"),
                     mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, CartItem.class));
+                    bytes -> mapper.readValue(bytes, AttemptReservationEvent.class));
 
     public static final Type<PaymentStockEvent> PAYMENT_STOCK_EVENT_TYPE =
             SimpleType.simpleImmutableTypeFrom(

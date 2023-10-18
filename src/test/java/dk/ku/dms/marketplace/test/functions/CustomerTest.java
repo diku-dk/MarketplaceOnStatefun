@@ -30,7 +30,7 @@ public class CustomerTest {
         CartFn function = new CartFn();
         Message message = MessageBuilder
                 .forAddress(self)
-                .withCustomType(CartMessages.ADD_CART_ITEM_TYPE, item )
+                .withCustomType(CartMessages.ADD_CART_ITEM_TYPE, item)
                 .build();
         function.apply(context, message);
 
