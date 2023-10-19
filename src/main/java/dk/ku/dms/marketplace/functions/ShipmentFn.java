@@ -1,23 +1,39 @@
 package dk.ku.dms.marketplace.functions;
 
+import dk.ku.dms.marketplace.egress.Identifiers;
+import dk.ku.dms.marketplace.egress.Messages;
+import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.entities.Shipment;
+import dk.ku.dms.marketplace.entities.Package;
+import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
 import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
 import dk.ku.dms.marketplace.states.ShipmentState;
+import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.message.EgressMessage;
+import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
 import org.apache.flink.statefun.sdk.java.message.Message;
+import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ShipmentFn implements StatefulFunction {
+public final class ShipmentFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(ShipmentFn.class);
-//
-    static final TypeName TYPE = TypeName.typeNameFromString("marketplace/shipment");
+
+    public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/shipment");
+
+    public static final ValueSpec<Integer> NEXT_SHIPMENT_ID_STATE = ValueSpec.named("nextShipmentId").withIntType();
     static final ValueSpec<ShipmentState> SHIPMENT_STATE = ValueSpec.named("shipmentState").withCustomType(ShipmentState.TYPE);
-//
-    //  Contains all the information needed to create a function instance
+
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
             .withValueSpec(SHIPMENT_STATE)
             .withSupplier(ShipmentFn::new)
@@ -36,7 +52,7 @@ public class ShipmentFn implements StatefulFunction {
 //            e.printStackTrace();
 //        }
 //    }
-//
+
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
@@ -54,94 +70,74 @@ public class ShipmentFn implements StatefulFunction {
         return context.done();
     }
 
-//
-//    private ShipmentState getShipmentState(Context context) {
-//        return context.storage().get(SHIPMENT_STATE).orElse(new ShipmentState());
-//    }
-//
+    private int generateNextShipmentId(Context context) {
+        int nextId = context.storage().get(NEXT_SHIPMENT_ID_STATE).orElse(0) + 1;
+        context.storage().set(NEXT_SHIPMENT_ID_STATE, nextId);
+        return nextId;
+    }
+
+
+    private ShipmentState getShipmentState(Context context) {
+        return context.storage().get(SHIPMENT_STATE).orElse(new ShipmentState());
+    }
+
     private void onProcessShipment(Context context, Message message) {
         PaymentConfirmed paymentConfirmed = message.as(ShipmentMessages.PAYMENT_CONFIRMED_TYPE);
-//        Invoice invoice = processShipment.getInvoice();
-//        CustomerCheckout customerCheckout = invoice.getCustomerCheckout();
-//        int customerId = customerCheckout.getCustomerId();
-//        int transactionID = processShipment.getInstanceId();
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        // The Java equivalent code
-//        List<OrderItem> invoiceItems = invoice.getItems();
-//        List<OrderItem> items = invoiceItems.stream()
-//                .collect(Collectors.groupingBy(OrderItem::getSellerId))
-//                .entrySet().stream()
-//                .sorted(Map.Entry.<Integer, List<OrderItem>>comparingByValue(Comparator.comparingInt(List::size)).reversed())
-//                .flatMap(entry -> entry.getValue().stream())
-//                .collect(Collectors.toList());
-//
-//        int shipmentId = generateNextShipmentId(context);
-//        Shipment shipment = new Shipment(
-//                shipmentId,
-//                invoice.getOrderID(),
-//                customerCheckout.getCustomerId(),
-//                items.size(),
-//                (float) items.stream().mapToDouble(OrderItem::getFreightValue).sum(),
-//                now,
-//                Enums.ShipmentStatus.APPROVED,
-//                customerCheckout.getFirstName(),
-//                customerCheckout.getLastName(),
-//                customerCheckout.getStreet(),
-//                Integer.parseInt(invoice.getOrderPartitionID()),
-//
-//                customerCheckout.getZipCode(),
-//                customerCheckout.getCity(),
-//                customerCheckout.getState()
-//        );
-//
-//        int packageId = 1;
-////        List<OrderItem> orderItems = invoice.getItems();
-//        List<Package> packages = new ArrayList<>();
-//        for (OrderItem orderItem : items) {
-//            Package pkg = new Package(
-//                    shipmentId,
-//                    invoice.getOrderID(),
-//                    packageId,
-//                    orderItem.getSellerId(),
-//                    orderItem.getProductId(),
-//                    orderItem.getQuantity(),
-//                    orderItem.getFreightValue(),
-//                    orderItem.getProductName(),
-//                    now,
-//                    Enums.PackageStatus.SHIPPED
-//            );
-//            packages.add(pkg);
-//            packageId++;
-//        }
-//
-//        ShipmentState shipmentState = getShipmentState(context);
-//        shipmentState.addShipment(shipmentId, shipment);
-//        shipmentState.addPackage(shipmentId, packages);
-//
-//        context.storage().set(SHIPMENT_STATE, shipmentState);
-//
-//        /**
-//         * Based on olist (https://dev.olist.com/docs/orders), the status of the order is
-//         * shipped when "at least one order item has been shipped"
-//         * All items are considered shipped here, so just signal the order about that
-//         */
-//
-//        String orderPartition = invoice.getOrderPartitionID();
-//
-//        Utils.sendMessage(
-//                context,
-//                OrderFn.TYPE,
-//                String.valueOf(orderPartition),
-//                ShipmentNotification.TYPE,
-//                new ShipmentNotification(
-//                        invoice.getOrderID(),
-//                        invoice.getCustomerCheckout().getCustomerId(),
-//                        Enums.ShipmentStatus.APPROVED,
-//                        now
-//                )
-//        );
-//
+        LocalDateTime now = LocalDateTime.now();
+
+        int shipmentId = generateNextShipmentId(context);
+        Shipment shipment = new Shipment(
+                shipmentId,
+                paymentConfirmed.getOrderId(),
+                paymentConfirmed.getCustomerCheckout().getCustomerId(),
+                paymentConfirmed.getItems().size(),
+                (float)  paymentConfirmed.getItems().stream().mapToDouble(OrderItem::getFreightValue).sum(),
+                now,
+                Enums.ShipmentStatus.APPROVED,
+                paymentConfirmed.getCustomerCheckout().getFirstName(),
+                paymentConfirmed.getCustomerCheckout().getLastName(),
+                paymentConfirmed.getCustomerCheckout().getStreet(),
+                paymentConfirmed.getCustomerCheckout().getZipCode(),
+                paymentConfirmed.getCustomerCheckout().getCity(),
+                paymentConfirmed.getCustomerCheckout().getState()
+        );
+
+        int packageId = 1;
+        List<Package> packages = new ArrayList<>();
+        for (OrderItem orderItem : paymentConfirmed.getItems()) {
+            Package pkg = new Package(
+                    shipmentId,
+                    paymentConfirmed.getOrderId(),
+                    packageId,
+                    orderItem.getSellerId(),
+                    orderItem.getProductId(),
+                    orderItem.getQuantity(),
+                    orderItem.getFreightValue(),
+                    orderItem.getProductName(),
+                    now,
+                    Enums.PackageStatus.SHIPPED
+            );
+            packages.add(pkg);
+            packageId++;
+        }
+
+        ShipmentState shipmentState = getShipmentState(context);
+        shipmentState.getShipments().put(shipmentId, shipment);
+        shipmentState.getPackages().put(shipmentId, packages);
+        context.storage().set(SHIPMENT_STATE, shipmentState);
+
+        ShipmentNotification shipmentNotification = new ShipmentNotification(
+                paymentConfirmed.getOrderId(), paymentConfirmed.getCustomerCheckout().getCustomerId(),
+                Enums.ShipmentStatus.APPROVED, now
+                );
+
+        Message shipmentOrderMsg =
+                MessageBuilder.forAddress(OrderFn.TYPE, context.self().id())
+                        .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE,
+                                shipmentNotification)
+                        .build();
+        context.send(shipmentOrderMsg);
+
 //        List<OrderItem> orderItems = invoice.getItems();
 //        List<Integer> sellerIds = new ArrayList<>();
 //        for (OrderItem orderItem : orderItems) {
@@ -161,17 +157,21 @@ public class ShipmentFn implements StatefulFunction {
 //                );
 //            }
 //        }
-//
-//        Utils.notifyTransactionComplete(context,
-//                Enums.TransactionType.CUSTOMER_SESSION.toString(),
-//                String.valueOf(customerId),
-//                customerId,
-//                transactionID,
-//                String.valueOf(customerId),
-//                Enums.MarkStatus.SUCCESS,
-//                "shipment");
+
+        TransactionMark mark = new TransactionMark(paymentConfirmed.getInstanceId(),
+                Enums.TransactionType.CUSTOMER_SESSION, paymentConfirmed.getCustomerCheckout().getCustomerId(),
+                Enums.MarkStatus.SUCCESS, "shipment");
+
+        final EgressMessage egressMessage =
+                EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                        .withCustomType(
+                                Messages.EGRESS_RECORD_JSON_TYPE,
+                                new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, mark.toString()))
+                        .build();
+
+        context.send(egressMessage);
+
     }
-//
 
 //
 //    private void onGetPendingPackages(Context context, Message message) {

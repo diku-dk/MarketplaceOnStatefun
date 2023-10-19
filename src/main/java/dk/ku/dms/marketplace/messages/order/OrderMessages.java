@@ -27,4 +27,10 @@ public final class OrderMessages {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, PaymentNotification.class));
 
+    public static final Type<ShipmentNotification> SHIPMENT_NOTIFICATION_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "ShipmentNotification"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, ShipmentNotification.class));
+
 }

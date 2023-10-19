@@ -10,52 +10,55 @@ import dk.ku.dms.marketplace.utils.Enums;
 
 import java.time.LocalDateTime;
 
-
-
-public class Shipment {
-    @JsonProperty("shipmentId") private int shipmentId;
-    @JsonProperty("orderId") private int orderId;
-    @JsonProperty("customerId") private int customerId;
-    @JsonProperty("packageCnt") private int packageCnt;
-    @JsonProperty("totalFreight") private float totalFreight;
-    @JsonProperty("orderPartition") private int orderPartition;
-
-    @JsonProperty("firstName") private String firstName;
-    @JsonProperty("lastName") private String lastName;
-    @JsonProperty("street") private String street;
-    @JsonProperty("zipCode") private String zipCode;
-    @JsonProperty("status") Enums.ShipmentStatus status;
-    @JsonProperty("city") private String city;
-    @JsonProperty("state") private String state;
+public final class Shipment {
+    @JsonProperty("shipmentId")
+    private final int shipmentId;
+    @JsonProperty("orderId")
+    private final int orderId;
+    @JsonProperty("customerId")
+    private final int customerId;
+    @JsonProperty("packageCnt")
+    private final int packageCount;
+    @JsonProperty("totalFreight")
+    private final float totalFreight;
+    @JsonProperty("firstName")
+    private final String firstName;
+    @JsonProperty("lastName")
+    private final String lastName;
+    @JsonProperty("street")
+    private final String street;
+    @JsonProperty("zipCode")
+    private final String zipCode;
+    @JsonProperty("status")
+    private final Enums.ShipmentStatus status;
+    @JsonProperty("city")
+    private final String city;
+    @JsonProperty("state")
+    private final String state;
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonProperty("requestDate") private LocalDateTime requestDate;
+    @JsonProperty("requestDate")
+    private final LocalDateTime requestDate;
 
     @JsonCreator
     public Shipment(
             @JsonProperty("shipmentId") int shipmentId,
             @JsonProperty("orderId") int orderId,
             @JsonProperty("customerId") int customerId,
-            @JsonProperty("packageCnt") int packageCnt,
-
+            @JsonProperty("packageCnt") int packageCount,
             @JsonProperty("totalFreight") float totalFreight,
             @JsonProperty("requestDate") LocalDateTime requestDate,
             @JsonProperty("status") Enums.ShipmentStatus status,
             @JsonProperty("firstName") String firstName,
             @JsonProperty("lastName") String lastName,
             @JsonProperty("street") String street,
-
-//            @JsonProperty("orderId") long orderId,
-            @JsonProperty("orderPartition") int orderPartition,
-
             @JsonProperty("zipCode") String zipCode,
             @JsonProperty("city") String city,
             @JsonProperty("state") String state
     ) {
         this.shipmentId = shipmentId;
         this.orderId = orderId;
-        this.packageCnt = packageCnt;
-        this.orderPartition = orderPartition;
+        this.packageCount = packageCount;
         this.totalFreight = totalFreight;
         this.customerId = customerId;
         this.status = status;

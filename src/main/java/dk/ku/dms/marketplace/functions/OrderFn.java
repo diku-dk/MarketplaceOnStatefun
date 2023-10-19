@@ -29,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.groupingBy;
 
-public class OrderFn implements StatefulFunction {
+public final class OrderFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(OrderFn.class);
 
@@ -92,20 +92,12 @@ public class OrderFn implements StatefulFunction {
         return context.storage().get(ORDER_STATE).orElse(new OrderState());
     }
 //
-    private int generateNextOrderID(Context context) {
+    private int generateNextOrderId(Context context) {
         int nextId = context.storage().get(NEXT_ORDER_ID_STATE).orElse(0) + 1;
         context.storage().set(NEXT_ORDER_ID_STATE, nextId);
         // different partitionId may have same orderId, so we add partitionId number at beginning
         return nextId;
     }
-//
-//    private int generateNextOrderHistoryID(Context context) {
-//        int nextId = context.storage().get(ORDERHISTORYIDSTATE).orElse(0) + 1;
-//        context.storage().set(ORDERHISTORYIDSTATE, nextId);
-//        return nextId;
-//    }
-
-
 
 //    ====================================================================================
 //    Attemp/Confirm/Cance  Reservation (two steps business logic)【send message to stock】
@@ -115,7 +107,7 @@ public class OrderFn implements StatefulFunction {
 
         CheckoutRequest checkoutRequest = message.as(OrderMessages.CHECKOUT_REQUEST_TYPE);
 
-        int orderId = generateNextOrderID(context);
+        int orderId = generateNextOrderId(context);
 
         OrderState orderState = getOrderState(context);
 

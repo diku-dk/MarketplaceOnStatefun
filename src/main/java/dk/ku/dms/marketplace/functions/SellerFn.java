@@ -37,7 +37,7 @@ import java.util.concurrent.CompletableFuture;
 //
 //import static java.lang.Thread.sleep;
 //
-public class SellerFn implements StatefulFunction {
+public final class SellerFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(SellerFn.class);
 

@@ -28,14 +28,22 @@ public final class ShipmentState {
                     bytes -> mapper.readValue(bytes, ShipmentState.class));
 
     @JsonProperty("shipments")
-    private final Map<String, Shipment> shipments;
+    private final Map<Integer, Shipment> shipments;
 
     @JsonProperty("packages")
-    private final Map<String, List<Package>> packages;
+    private final Map<Integer, List<Package>> packages;
 
     public ShipmentState() {
         this.shipments = new HashMap<>();
         this.packages = new HashMap<>();
+    }
+
+    public Map<Integer, Shipment> getShipments() {
+        return shipments;
+    }
+
+    public Map<Integer, List<Package>> getPackages() {
+        return packages;
     }
 
     @JsonIgnore

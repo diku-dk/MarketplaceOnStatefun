@@ -11,13 +11,13 @@ public final class MarketplaceServer {
     public static void main(String[] args) {
         final StatefulFunctions functions = new StatefulFunctions();
         functions.withStatefulFunction(CartFn.SPEC);
-//        functions.withStatefulFunction(OrderFn.SPEC);
+        functions.withStatefulFunction(OrderFn.SPEC);
 //        functions.withStatefulFunction(SellerFn.SPEC);
         functions.withStatefulFunction(StockFn.SPEC);
         functions.withStatefulFunction(ProductFn.SPEC);
         functions.withStatefulFunction(CustomerFn.SPEC);
         functions.withStatefulFunction(PaymentFn.SPEC);
-//        functions.withStatefulFunction(ShipmentFn.SPEC);
+        functions.withStatefulFunction(ShipmentFn.SPEC);
 //        functions.withStatefulFunction(ShipmentProxyFn.SPEC);
 
         final RequestReplyHandler handler = functions.requestReplyHandler();

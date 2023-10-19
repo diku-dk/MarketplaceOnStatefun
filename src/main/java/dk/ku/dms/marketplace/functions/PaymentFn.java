@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class PaymentFn implements StatefulFunction {
+public final class PaymentFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(PaymentFn.class);
 
@@ -154,7 +154,7 @@ public class PaymentFn implements StatefulFunction {
                         .build();
         context.send(paymentCustomerMsg);
 
-        PaymentConfirmed paymentConfirmed = new PaymentConfirmed(orderId, invoiceIssued.getTotalInvoice(), invoiceIssued.getItems(), now, customerCheckout.getInstanceId());
+        PaymentConfirmed paymentConfirmed = new PaymentConfirmed(customerCheckout, orderId, invoiceIssued.getTotalInvoice(), invoiceIssued.getItems(), now, customerCheckout.getInstanceId());
 
         Message paymentShipmentMsg =
                 MessageBuilder.forAddress(ShipmentFn.TYPE,

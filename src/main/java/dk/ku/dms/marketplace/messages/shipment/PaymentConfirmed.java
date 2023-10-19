@@ -1,17 +1,22 @@
 package dk.ku.dms.marketplace.messages.shipment;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderItem;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class PaymentConfirmed {
+public final class PaymentConfirmed {
+
+    @JsonProperty("customerCheckout")
+    private final CustomerCheckout customerCheckout;
 
     @JsonProperty("orderId")
     private final int orderId;
@@ -31,7 +36,9 @@ public class PaymentConfirmed {
     private String instanceId;
 
     @JsonCreator
-    public PaymentConfirmed(int orderId, float totalAmount, List<OrderItem> items, LocalDateTime date, String instanceId) {
+    public PaymentConfirmed(@JsonProperty("customerCheckout") CustomerCheckout customerCheckout, @JsonProperty("orderId") int orderId, @JsonProperty("totalAmount") float totalAmount,
+                            @JsonProperty("items") List<OrderItem> items, @JsonProperty("date") LocalDateTime date, @JsonProperty("instanceId") String instanceId) {
+        this.customerCheckout = customerCheckout;
         this.orderId = orderId;
         this.totalAmount = totalAmount;
         this.items = items;
@@ -39,4 +46,33 @@ public class PaymentConfirmed {
         this.instanceId = instanceId;
     }
 
+    @JsonIgnore
+    public CustomerCheckout getCustomerCheckout() {
+        return customerCheckout;
+    }
+
+    @JsonIgnore
+    public int getOrderId() {
+        return orderId;
+    }
+
+    @JsonIgnore
+    public float getTotalAmount() {
+        return totalAmount;
+    }
+
+    @JsonIgnore
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
+    @JsonIgnore
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    @JsonIgnore
+    public String getInstanceId() {
+        return instanceId;
+    }
 }
