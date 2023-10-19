@@ -62,4 +62,16 @@ public class OrderState {
     public Map<Integer, List<OrderHistory>> getOrderHistory() {
         return orderHistory;
     }
+    
+    @JsonIgnore
+    public void addOrder(int orderId, Order order, List<OrderItem> items, OrderHistory orderHistory) {
+    	orders.put(orderId, order);
+    	orderItems.put(orderId, items);
+    	
+    	List<OrderHistory> history = new ArrayList<>();
+    	if (this.orderHistory.containsKey(orderId)) history = this.orderHistory.get(orderId);
+    	else this.orderHistory.put(orderId, history);
+    	
+    	history.add(orderHistory);
+    }
 }

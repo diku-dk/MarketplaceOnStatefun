@@ -2,6 +2,8 @@ package dk.ku.dms.marketplace.functions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ku.dms.marketplace.entities.CartItem;
+import dk.ku.dms.marketplace.entities.Order;
+import dk.ku.dms.marketplace.entities.OrderHistory;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
@@ -12,6 +14,9 @@ import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.states.OrderState;
 import dk.ku.dms.marketplace.utils.Enums;
+import dk.ku.dms.marketplace.utils.Enums.OrderStatus;
+import dk.ku.dms.marketplace.utils.Utils;
+
 import org.apache.flink.statefun.sdk.java.Context;
 import org.apache.flink.statefun.sdk.java.StatefulFunction;
 import org.apache.flink.statefun.sdk.java.TypeName;
@@ -23,8 +28,13 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 
 public class OrderFn implements StatefulFunction {
@@ -208,197 +218,138 @@ public class OrderFn implements StatefulFunction {
 
     private void generateOrder(Context context, CheckoutRequest checkoutRequest, OrderState orderState, int orderId) {
 
-        List<OrderItem> items =  orderState.getOrderItems().get(orderId);
+    	LocalDateTime now = LocalDateTime.now();
+    	
+        List<OrderItem> itemsToCheckout = orderState.getOrderItems().get(orderId);
+        
+        float total_freight = 0;
+        float total_amount = 0;
+        for (OrderItem item : itemsToCheckout) {
+        	total_freight += item.getFreightValue();
+        	total_amount += item.getUnitPrice() * item.getQuantity();
+        }
+        
+        float total_items = total_amount;
+        
+        Map<Map.Entry<Integer, Integer>, Float> totalPerItem = new HashMap<>();
+        float total_incentive = 0;
+        for (OrderItem item : itemsToCheckout) {
+        	float total_item = item.getUnitPrice() * item.getQuantity();
+        	
+        	if (total_item - item.getVoucher() > 0)
+        	{
+        	    total_amount -= item.getVoucher();
+        	    total_incentive += item.getVoucher();
+        	    total_item -= item.getVoucher();
+        	}
+        	else
+        	{
+        	    total_amount -= total_item;
+        	    total_incentive += total_item;
+        	    total_item = 0;
+        	}
 
-        // TODO build order
-        // Order order = orderState.getOrders().get(orderId);
+        	totalPerItem.put(new AbstractMap.SimpleImmutableEntry<>(item.getSellerId(), item.getProductId()), total_item);
+        }
+        
+        int customerId = checkoutRequest.getCustomerCheckout().getCustomerId();
+        
+        String invoiceNumber = Utils.GetInvoiceNumber(customerId, now, orderId);
+        
+        Order order = new Order(
+            orderId, 
+            customerId, 
+            OrderStatus.INVOICED,
+            invoiceNumber, 
+            checkoutRequest.getTimestamp(),
+            now, 
+            now, 
+            null, 
+            null,
+            null, 
+            itemsToCheckout.size(), 
+            total_amount, 
+            total_freight, 
+            total_incentive, 
+            total_amount + total_freight, 
+            total_items, 
+            null);
+        
+        List<OrderItem> items = new ArrayList<>();
+        
+        int id = 1;
+        for (OrderItem item : itemsToCheckout)
+        {
+            items.add(new OrderItem
+            (
+                orderId,
+                id,
+                item.getProductId(),
+                item.getProductName(),
+                item.getSellerId(),
+                item.getUnitPrice(),
+                item.getFreightValue(),
+                item.getQuantity(),
+                item.getUnitPrice() * item.getQuantity(),
+                totalPerItem.get(Map.entry(item.getSellerId(), item.getProductId())),
+                now.plusDays(3)
+            ));
+            id++;
+        }
+        
+        OrderHistory orderHistory = new OrderHistory(orderId, now, Enums.OrderStatus.INVOICED);
+        
+        orderState.addOrder(orderId, order, items, orderHistory);
+        
+        Map<Integer, List<OrderItem>> itemsPerSeller = new HashMap<>();
+        
+        for (OrderItem item : items) 
+        {
+        	int sellerId = item.getSellerId();
+        	
+        	List<OrderItem> list = new ArrayList<>();
+        	if (itemsPerSeller.containsKey(sellerId)) list = itemsPerSeller.get(sellerId);
+        	else itemsPerSeller.put(sellerId, list);
+        	
+        	list.add(item);
+        }
 
+        // send a message to each related seller (stock function)
+        for (Map.Entry<Integer, List<OrderItem>> entry : itemsPerSeller.entrySet())
+        {
+        	InvoiceIssued invoiceCustom = new InvoiceIssued(
+        			checkoutRequest.getCustomerCheckout(),
+        			orderId,
+        			invoiceNumber,
+        			entry.getValue(),
+        			order.getTotalInvoice(),
+        			now,
+        			checkoutRequest.getInstanceId());
+        	
+        	Message invoiceIssuedMsg =
+                    MessageBuilder.forAddress(SellerFn.TYPE, entry.getKey())
+                            .withCustomType(PaymentMessages.INVOICE_ISSUED_TYPE, invoiceCustom)
+                            .build();
+
+            context.send(invoiceIssuedMsg);
+        }
+        
+        // send message to payment function
         InvoiceIssued invoiceIssued = new InvoiceIssued(
                 checkoutRequest.getCustomerCheckout(),
                 orderId,
-                // order.getInvoiceNumber(),
-                "",
+                invoiceNumber,
                 items,
-                // order.getTotalInvoice(),
-                0,
-                LocalDateTime.now(),
-                checkoutRequest.getInstanceId() );
-
+                order.getTotalInvoice(),
+                now,
+                checkoutRequest.getInstanceId());
+        
         Message invoiceIssuedMsg =
-                MessageBuilder.forAddress(StockFn.TYPE, context.self().id())
+                MessageBuilder.forAddress(PaymentFn.TYPE, context.self().id())
                         .withCustomType(PaymentMessages.INVOICE_ISSUED_TYPE, invoiceIssued)
                         .build();
 
         context.send(invoiceIssuedMsg);
-
-//        int orderId = generateNextOrderID(context);
-//        Map<Integer, CartItem> items = successCheckout.getItems();
-//
-//        // calculate total freight_value
-//        float total_freight_value = 0;
-//        for (Map.Entry<Integer, CartItem> entry : items.entrySet()) {
-//            CartItem item = entry.getValue();
-//            total_freight_value += item.getFreightValue();
-//        }
-//
-//        //  calculate total amount
-//        float total_amount = 0;
-//
-//        for (Map.Entry<Integer, CartItem> entry : items.entrySet()) {
-//            CartItem item = entry.getValue();
-//            float amount = item.getUnitPrice() * item.getQuantity();
-//            total_amount = total_amount + amount;
-//        }
-//
-//        // total before discounts
-//        float total_items = total_amount;
-////
-//        // apply vouchers per product, but only until total >= 0 for each item
-//        Map<Integer, Float> totalPerItem = new HashMap<>();
-//        float total_incentive = 0;
-//        for (Map.Entry<Integer, CartItem> entry : items.entrySet()) {
-//            CartItem item = entry.getValue();
-//
-//            float total_item = item.getUnitPrice() * item.getQuantity();
-//            float vouchers = item.getVoucher();
-//
-//            if (total_item - vouchers > 0) {
-//                total_amount = total_amount - vouchers;
-//                total_incentive = total_incentive + vouchers;
-//                total_item = total_item - vouchers;
-//            } else {
-//                total_amount = total_amount - total_item;
-//                total_incentive = total_incentive + total_item;
-//                total_item = 0;
-//            }
-//            totalPerItem.put(entry.getKey(), total_item);
-//        }
-//
-//        // get state
-//        OrderState orderState = getOrderState(context);
-//
-//        int customerId = successCheckout.getCustomerCheckout().getCustomerId();
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        StringBuilder invoiceNumber = new StringBuilder();
-//        invoiceNumber.append(customerId)
-//                .append("_").append(now.toString()).append("d")
-//                .append("-").append(orderState.generateCustomerNextOrderID(customerId));
-//
-//        // add order and orderHistory to orderState
-//        Order successOrder = new Order(orderId, customerId, Enums.OrderStatus.INVOICED, invoiceNumber.toString(), );
-//        successOrder.setId(orderId);
-//        successOrder.setCustomerId(customerId);
-////      invoice is a request for payment, so it makes sense to use this status now
-//        successOrder.setStatus(Enums.OrderStatus.INVOICED);
-//        successOrder.setInvoiceNumber(invoiceNumber.toString());
-//        successOrder.setPurchaseTimestamp(successCheckout.getCreatedAt());
-//        successOrder.setCreated_at(now);
-//        successOrder.setUpdated_at(now);
-//        successOrder.setData(successCheckout.toString());
-//        successOrder.setTotalAmount(total_amount);
-//        successOrder.setTotalFreight(total_freight_value);
-//        successOrder.setTotalItems(total_items);
-//        successOrder.setTotalIncentive(total_incentive);
-//        successOrder.setCountItems(successCheckout.getItems().size());
-//
-//        // add order
-//        orderState.addOrder(orderId, successOrder);
-//
-//        // add history
-//        OrderHistory orderHistory = new OrderHistory(
-//                orderId,
-//                now,
-//                Enums.OrderStatus.INVOICED);
-//        orderState.addOrderHistory(orderId, orderHistory);
-//
-//        // add orderItems and create invoice
-//        List<OrderItem> invoiceItems = new ArrayList<>();
-//        int order_item_id = 0;
-//        for (Map.Entry<Integer, CartItem> entry : items.entrySet()) {
-//
-//            CartItem item = entry.getValue();
-//            OrderItem oim = new OrderItem(
-//                orderId,
-//                order_item_id,
-//                item.getProductId(),
-//                item.getProductName(),
-//                item.getSellerId(),
-//                item.getUnitPrice(),
-//                item.getFreightValue(),
-//                item.getQuantity(),
-//                item.getQuantity() * item.getUnitPrice(),
-//                totalPerItem.get(entry.getKey()),
-//                LocalDateTime.now().plusDays(3)
-//            );
-//
-//            orderState.addOrderItem(oim);
-//
-//            // vouchers so payment can process
-//            oim.setVouchers(item.getVoucher());
-//            invoiceItems.add(oim);
-//
-//            order_item_id++;
-//        }
-//
-//        context.storage().set(ORDERSTATE, orderState);
-//
-//
-//        CustomerCheckout customerCheckout = successCheckout.getCustomerCheckout();
-//        int orderID = successOrder.getId();
-//        String invoiceNumber_ = invoiceNumber.toString();
-//        String orderPartitionID = context.self().id();
-//
-//        Invoice invoice = new Invoice(
-//                customerCheckout,
-//                orderID,
-//                invoiceNumber_,
-//                invoiceItems,
-//                successOrder.getTotalInvoice(),
-//                now,
-//                orderPartitionID
-//        );
-//
-//        // send message to paymentFn to pay the invoice
-////        int paymentPation = orderId % Constants.nPaymentPartitions;
-//        int paymentPation = customerId;
-//        Utils.sendMessage(context,
-//                PaymentFn.TYPE,
-//                String.valueOf(paymentPation),
-//                InvoiceIssued.TYPE,
-//                new InvoiceIssued(invoice, successCheckout.getCustomerCheckout().getInstanceId()));
-//
-//        // send sellerInvoices to each seller
-//
-//        Map<Integer, Invoice> sellerInvoices = new HashMap<>();
-//
-//        for (OrderItem item : invoiceItems) {
-//            int sellerId = item.getSellerId();
-//            if (!sellerInvoices.containsKey(sellerId)) {
-//                Invoice sellerInvoice = new Invoice(
-//                        customerCheckout,
-//                        orderID,
-//                        invoiceNumber_,
-//                        new ArrayList<>(),
-//                        0,
-//                        now,
-//                        orderPartitionID
-//                );
-//                sellerInvoices.put(sellerId, sellerInvoice);
-//            }
-//            sellerInvoices.get(sellerId).getItems().add(item);
-//        }
-//
-//        for (Map.Entry<Integer, Invoice> entry : sellerInvoices.entrySet()) {
-//            int sellerId = entry.getKey();
-//            Invoice sellerInvoice = entry.getValue();
-//            int sellerPartition = sellerId;
-//            Utils.sendMessage(context,
-//                    SellerFn.TYPE,
-//                    String.valueOf(sellerPartition),
-//                    InvoiceIssued.TYPE,
-//                    new InvoiceIssued(sellerInvoice, successCheckout.getCustomerCheckout().getInstanceId()));
-//        }
     }
 //
 //    private void ProcessShipmentNotification(Context context, Message message) throws SQLException, JsonProcessingException {

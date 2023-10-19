@@ -52,11 +52,105 @@ public final class OrderItem {
         this.shippingLimitDate = shippingLimitDate;
     }
 
-    public void setVouchers(float voucher) {
+	public void setVouchers(float voucher) {
         this.voucher = voucher;
     }
 
     public int getSellerId() {
         return sellerId;
     }
+    
+    public float getFreightValue() {
+    	return freightValue;
+    }
+
+	public int getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(int orderId) {
+		this.orderId = orderId;
+	}
+
+	public int getOrderItemId() {
+		return orderItemId;
+	}
+
+	public void setOrderItemId(int orderItemId) {
+		this.orderItemId = orderItemId;
+	}
+
+	public int getProductId() {
+		return productId;
+	}
+
+	public void setProductId(int productId) {
+		this.productId = productId;
+	}
+
+	public String getProductName() {
+		return productName;
+	}
+
+	public void setProductName(String productName) {
+		this.productName = productName;
+	}
+
+	public float getUnitPrice() {
+		return unitPrice;
+	}
+
+	public void setUnitPrice(float unitPrice) {
+		this.unitPrice = unitPrice;
+	}
+
+	public int getQuantity() {
+		return quantity;
+	}
+
+	public void setQuantity(int quantity) {
+		this.quantity = quantity;
+	}
+
+	public float getTotalPrice() {
+		return totalPrice;
+	}
+
+	public void setTotalPrice(float totalPrice) {
+		this.totalPrice = totalPrice;
+	}
+
+	public float getTotalAmount() {
+		return totalAmount;
+	}
+
+	public void setTotalAmount(float totalAmount) {
+		this.totalAmount = totalAmount;
+	}
+
+	public float getVoucher() {
+		return voucher;
+	}
+
+	public void setVoucher(float voucher) {
+		this.voucher = voucher;
+	}
+
+	public LocalDateTime getShippingLimitDate() {
+		return shippingLimitDate;
+	}
+
+	public void setShippingLimitDate(LocalDateTime shippingLimitDate) {
+		this.shippingLimitDate = shippingLimitDate;
+	}
+
+	public void setSellerId(int sellerId) {
+		this.sellerId = sellerId;
+	}
+
+	public void setFreightValue(float freightValue) {
+		this.freightValue = freightValue;
+	}
+    
+    
 }
