@@ -16,7 +16,6 @@ import dk.ku.dms.marketplace.states.OrderState;
 import dk.ku.dms.marketplace.utils.Enums;
 import dk.ku.dms.marketplace.utils.Enums.OrderStatus;
 import dk.ku.dms.marketplace.utils.Utils;
-
 import org.apache.flink.statefun.sdk.java.Context;
 import org.apache.flink.statefun.sdk.java.StatefulFunction;
 import org.apache.flink.statefun.sdk.java.TypeName;
@@ -28,13 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class OrderFn implements StatefulFunction {
@@ -291,13 +284,13 @@ public class OrderFn implements StatefulFunction {
                 item.getFreightValue(),
                 item.getQuantity(),
                 item.getUnitPrice() * item.getQuantity(),
-                totalPerItem.get(Map.entry(item.getSellerId(), item.getProductId())),
+                totalPerItem.get(new AbstractMap.SimpleImmutableEntry<>(item.getSellerId(), item.getProductId())),
                 now.plusDays(3)
             ));
             id++;
         }
         
-        OrderHistory orderHistory = new OrderHistory(orderId, now, Enums.OrderStatus.INVOICED);
+        OrderHistory orderHistory = new OrderHistory(orderId, now, OrderStatus.INVOICED);
         
         orderState.addOrder(orderId, order, items, orderHistory);
         
@@ -327,7 +320,7 @@ public class OrderFn implements StatefulFunction {
         			checkoutRequest.getInstanceId());
         	
         	Message invoiceIssuedMsg =
-                    MessageBuilder.forAddress(SellerFn.TYPE, entry.getKey())
+                    MessageBuilder.forAddress(SellerFn.TYPE, String.valueOf(entry.getKey()))
                             .withCustomType(PaymentMessages.INVOICE_ISSUED_TYPE, invoiceCustom)
                             .build();
 

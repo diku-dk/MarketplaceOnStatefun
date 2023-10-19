@@ -1,9 +1,6 @@
 package dk.ku.dms.marketplace;
 
-import dk.ku.dms.marketplace.functions.CartFn;
-import dk.ku.dms.marketplace.functions.CustomerFn;
-import dk.ku.dms.marketplace.functions.ProductFn;
-import dk.ku.dms.marketplace.functions.StockFn;
+import dk.ku.dms.marketplace.functions.*;
 import io.undertow.Undertow;
 import org.apache.flink.statefun.sdk.java.StatefulFunctions;
 import org.apache.flink.statefun.sdk.java.handler.RequestReplyHandler;
@@ -19,7 +16,7 @@ public final class MarketplaceServer {
         functions.withStatefulFunction(StockFn.SPEC);
         functions.withStatefulFunction(ProductFn.SPEC);
         functions.withStatefulFunction(CustomerFn.SPEC);
-//        functions.withStatefulFunction(PaymentFn.SPEC);
+        functions.withStatefulFunction(PaymentFn.SPEC);
 //        functions.withStatefulFunction(ShipmentFn.SPEC);
 //        functions.withStatefulFunction(ShipmentProxyFn.SPEC);
 

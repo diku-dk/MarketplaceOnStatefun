@@ -16,6 +16,7 @@ import java.util.Map;
 public class PaymentState {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+
     public static final Type<PaymentState> TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "PaymentState"),

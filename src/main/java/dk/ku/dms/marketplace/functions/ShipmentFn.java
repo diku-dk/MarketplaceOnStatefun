@@ -1,5 +1,14 @@
-//package dk.ku.dms.marketplace.functions;
-//
+package dk.ku.dms.marketplace.functions;
+
+import org.apache.flink.statefun.sdk.java.Context;
+import org.apache.flink.statefun.sdk.java.StatefulFunction;
+import org.apache.flink.statefun.sdk.java.TypeName;
+import org.apache.flink.statefun.sdk.java.message.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
+
 //import dk.ku.dms.marketplace.common.entity.*;
 //import dk.ku.dms.marketplace.common.entity.Package;
 //import dk.ku.dms.marketplace.common.utils.PostgreHelper;
@@ -26,11 +35,11 @@
 //import java.util.logging.Logger;
 //import java.util.stream.Collectors;
 //
-//public class ShipmentFn implements StatefulFunction {
+public class ShipmentFn implements StatefulFunction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ShipmentFn.class);
 //
-//    Logger logger = Logger.getLogger("ShipmentFn");
-//
-//    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "shipment");
+    static final TypeName TYPE = TypeName.typeNameFromString("marketplace/shipment");
 //
 //    static final ValueSpec<Integer> SHIPMENTIDSTATE = ValueSpec.named("shipmentIdState").withIntType();
 //    static final ValueSpec<ShipmentState> SHIPMENT_STATE = ValueSpec.named("shipmentState").withCustomType(ShipmentState.TYPE);
@@ -55,8 +64,8 @@
 //        }
 //    }
 //
-//    @Override
-//    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
+    @Override
+    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
 //        try {
 //            if (message.is(ProcessShipment.TYPE)) {
 //                onProcessShipment(context, message);
@@ -68,8 +77,8 @@
 //        } catch (Exception e) {
 //            System.out.println("ShipmentFn Exception !!!!!!!!!!!!!!!!");
 //        }
-//        return context.done();
-//    }
+        return context.done();
+    }
 //
 //    private int generateNextShipmentId(Context context) {
 //        int shipmentId = context.storage().get(SHIPMENTIDSTATE).orElse(0) + 1;
@@ -379,4 +388,4 @@
 //
 //        }
 //    }
-//}
+}

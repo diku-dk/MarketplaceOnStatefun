@@ -12,7 +12,6 @@ import dk.ku.dms.marketplace.entities.OrderItem;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 public final class InvoiceIssued {
     @JsonProperty("customerCheckout")
     private final CustomerCheckout customerCheckout;
@@ -51,11 +50,19 @@ public final class InvoiceIssued {
         this.instanceId = instanceId;
     }
 
+    public CustomerCheckout getCustomerCheckout() {
+        return customerCheckout;
+    }
+
     public List<OrderItem> getItems() {
         return items;
     }
 
     public int getOrderId() {
         return orderId;
+    }
+
+    public float getTotalInvoice() {
+        return totalInvoice;
     }
 }

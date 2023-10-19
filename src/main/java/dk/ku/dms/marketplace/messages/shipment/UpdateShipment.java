@@ -1,4 +1,4 @@
-package dk.ku.dms.marketplace.messages.MsgToShipment;
+package dk.ku.dms.marketplace.messages.shipment;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

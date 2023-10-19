@@ -47,7 +47,7 @@ public class Enums {
         DELIVERED
     }
 
-    public enum NotificationType
+    public enum CustomerNotificationType
     {
         notify_failed_payment,
         notify_success_payment,

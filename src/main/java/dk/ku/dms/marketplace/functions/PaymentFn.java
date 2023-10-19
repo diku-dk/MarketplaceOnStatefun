@@ -1,233 +1,176 @@
 package dk.ku.dms.marketplace.functions;
 
-import org.apache.flink.statefun.sdk.java.*;
+import dk.ku.dms.marketplace.entities.CustomerCheckout;
+import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.entities.OrderPayment;
+import dk.ku.dms.marketplace.entities.OrderPaymentCard;
+import dk.ku.dms.marketplace.messages.customer.NotifyCustomer;
+import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.order.PaymentNotification;
+import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
+import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
+import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
+import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
+import dk.ku.dms.marketplace.messages.stock.PaymentStockEvent;
+import dk.ku.dms.marketplace.messages.stock.StockMessages;
+import dk.ku.dms.marketplace.utils.Constants;
+import dk.ku.dms.marketplace.utils.Enums;
+import dk.ku.dms.marketplace.utils.Utils;
+import org.apache.flink.statefun.sdk.java.Context;
+import org.apache.flink.statefun.sdk.java.StatefulFunction;
+import org.apache.flink.statefun.sdk.java.StatefulFunctionSpec;
+import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.message.Message;
+import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-//
 public class PaymentFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(PaymentFn.class);
 
     public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/payment");
 //
-//    static final ValueSpec<PaymentState> PAYMENT_STATE = ValueSpec.named("paymentState").withCustomType(PaymentState.TYPE);
+//    public static final ValueSpec<PaymentState> PAYMENT_STATE = ValueSpec.named("paymentState").withCustomType(PaymentState.TYPE);
 //
-//    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
-//            .withSupplier(PaymentFn::new)
-//            .withValueSpecs(PAYMENT_STATE)
-//            .build();
+    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
+            .withSupplier(PaymentFn::new)
+            // .withValueSpecs(PAYMENT_STATE)
+            .build();
 //
 ////    PaymentService paymentService = new DummyPaymentServiceService();
 //
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         LOG.info("Payment "+context.self().id()+" received!");
-//        try {
-//            // stock --> payment (request to payment)
-//            if (message.is(InvoiceIssued.TYPE)) {
-//                onProcessPayment(context, message);
-//            }
-//        } catch (Exception e) {
-//            System.out.println("PaymentFn Exception !!!!!!!!!!!!!!!!");
-//            e.printStackTrace();
-//        }
+        try {
+            // stock --> payment (request to payment)
+            if (message.is(PaymentMessages.INVOICE_ISSUED_TYPE)) {
+                onProcessPayment(context, message);
+            }
+        } catch (Exception e) {
+            System.out.println("PaymentFn Exception !!!!!!!!!!!!!!!!");
+            e.printStackTrace();
+        }
         return context.done();
     }
+
+    private void onProcessPayment(Context context, Message message) {
+
+        InvoiceIssued invoiceIssued = message.as(PaymentMessages.INVOICE_ISSUED_TYPE);
+
+        CustomerCheckout customerCheckout = invoiceIssued.getCustomerCheckout();
+
+        LocalDateTime now = LocalDateTime.now();
+
+        int orderId = invoiceIssued.getOrderId();
+
+        int seq = 1;
+        boolean cc = (customerCheckout.getPaymentType().equals(Enums.PaymentType.CREDIT_CARD.toString()));
 //
-////    ========================================================================
-////                             helper functions
-////    ========================================================================
-//
-//    private PaymentState getPaymentState(Context context) {
-//        return context.storage().get(PAYMENT_STATE).orElse(new PaymentState());
-//    }
-//
-//    private String getPartionText(String id) {
-//        return String.format("[ PaymentFn partitionId %s ] ", id);
-//    }
-//
-//    private void showLog(String log) {
-//        logger.info(log);
-////        System.out.println(log);
-//    }
-//
-//    private void showLogPrt(String log) {
-////        logger.info(log);
-//        System.out.println(log);
-//    }
-//
-////    ========================================================================
-////                             business logic
-////    ========================================================================
-//
-//    private void onProcessPayment(Context context, Message message) {
-//
-//        PaymentState paymentState = getPaymentState(context);
-////        PaymentAsyncTaskState paymentAsyncTaskState = getPaymentAsyncTaskState(context);
-//        InvoiceIssued invoiceIssued = message.as(InvoiceIssued.TYPE);
-//
-//        Invoice invoice = invoiceIssued.getInvoice();
-//        int transactionID = invoiceIssued.getInstanceId();
-//        CustomerCheckout customerCheckout = invoice.getCustomerCheckout();
-//
-//        PaymentRequest paymentRequest = new PaymentRequest(
-//                invoice.getTotalInvoice(),
-//                invoice.getInvoiceNumber(),
-//                customerCheckout.getCardHolderName(),
-//                customerCheckout.getCardNumber(),
-//                customerCheckout.getCardSecurityNumber(),
-//                customerCheckout.getCardExpiration()
-//        );
-//
-//        String log = getPartionText(context.self().id())
-//                + " asking for payment for order: " + invoice.getOrderID();
-////        showLogPrt(log);
-//
-//        int orderId = invoice.getOrderID();
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        String orderPartition = invoice.getOrderPartitionID();
-//        String uniqueOrderID = orderPartition + "_" + orderId;
-//
-//        // ========================================================================
-//
-////        Call the asynchronous payment processing method
-////        CompletableFuture<Boolean> approved = paymentService.ContactESP(customerCheckout, total);
-////        approved.whenComplete(
-////                (paymentResult, throwable) -> {
-////                    // TODO: 6/12/2023 noFurtherModificationsAllowed
-////                }
-////        );
-//        boolean paymentResult = true; // assume always success
-//
-//        String log_ = getPartionText(context.self().id())
-//                + "contact ESP finished, paymentResult for order: " + uniqueOrderID + " is " + paymentResult;
-////        showLogPrt(log_);
-//
-//        Enums.OrderStatus orderStatus =
-//                paymentResult ? Enums.OrderStatus.PAYMENT_PROCESSED : Enums.OrderStatus.PAYMENT_FAILED;
-//
-//        int seq = 1;
-//
-//        boolean cc = (customerCheckout.getPaymentType().equals(Enums.PaymentType.CREDIT_CARD.toString()));
-//
-//        // create payment tuple
-//        if (cc || customerCheckout.getPaymentType().equals(Enums.PaymentType.DEBIT_CARD.toString())) {
-//           OrderPayment cardPaymentLine = new OrderPayment(
-//                     uniqueOrderID,
-//                     seq,
-//                     customerCheckout.getInstallments(),
-//                     now,
-//                     invoice.getTotalInvoice(),
-//                     Enums.OrderStatus.PAYMENT_PROCESSED.toString()
-//              );
-//           paymentState.addOrderPayment(uniqueOrderID, cardPaymentLine);
-//           seq += 1;
-//        }
-//
-//        context.storage().set(PAYMENT_STATE, paymentState);
-//
-//        // send message to stock
-//        for (OrderItem item : invoice.getItems()) {
-////            int partition = (item.getProductId() % Constants.nStockPartitions);
-//            int partition = item.getProductId();
-//            Utils.sendMessage(
-//                    context,
-//                    StockFn.TYPE,
-//                    String.valueOf(partition),
-//                    ConfirmStockEvent.TYPE,
-//                    new ConfirmStockEvent(
-//                            uniqueOrderID,
-//                            item.getProductId(),
-//                            item.getQuantity(),
-//                            orderStatus)
-//            );
-//        }
-//
-//        int customerId = customerCheckout.getCustomerId();
-//        List<OrderItem> items = invoice.getItems();
-//        List<Integer> sellerIds = new ArrayList<>();
-//        for (OrderItem item : items) {
-//            int sellerId = item.getSellerId();
-//            if (!sellerIds.contains(sellerId)) {
-//                sellerIds.add(sellerId);
-//            }
-//        }
-//
-//        if (orderStatus == Enums.OrderStatus.PAYMENT_PROCESSED) {
-//
-//            int shipmentPartition = customerId % Constants.nShipmentPartitions;
-//            System.out.println("** customer id: " + customerId + " order id: " + orderId + " shippment partition: " + shipmentPartition);
-//
-//            Utils.sendMessage(context, OrderFn.TYPE, String.valueOf(orderPartition),
-//                    PaymentNotification.TYPE,
-//                    new PaymentNotification(orderId, Enums.OrderStatus.PAYMENT_PROCESSED)
-//            );
-//
-//            Utils.sendMessage(context, CustomerFn.TYPE, String.valueOf(customerId),
-//                    NotifyCustomer.TYPE,
-//                    new NotifyCustomer(customerId, null, Enums.NotificationType.notify_success_payment)
-//            );
-//
-//            Utils.sendMessage(context, ShipmentFn.TYPE, String.valueOf(shipmentPartition),
-//                    ProcessShipment.TYPE,
-//                    new ProcessShipment(invoice, transactionID)
-//            );
-//
-//            for (int sellerId : sellerIds) {
-//                Utils.sendMessage(context, SellerFn.TYPE, String.valueOf(sellerId),
-//                        PaymentNotification.TYPE,
-//                        new PaymentNotification(orderId, Enums.OrderStatus.PAYMENT_PROCESSED)
-//                );
-//            }
-//
-//        } else {
-//            // payment failed
-//            Utils.sendMessage(context, CustomerFn.TYPE, String.valueOf(customerId),
-//                    NotifyCustomer.TYPE,
-//                    new NotifyCustomer(customerId, null, Enums.NotificationType.notify_failed_payment)
-//            );
-//
-//            Utils.sendMessage(context, OrderFn.TYPE, String.valueOf(orderPartition),
-//                    PaymentNotification.TYPE,
-//                    new PaymentNotification(orderId, Enums.OrderStatus.PAYMENT_FAILED)
-//            );
-//
-//            for (int sellerId : sellerIds) {
-//                Utils.sendMessage(context, SellerFn.TYPE, String.valueOf(sellerId),
-//                        PaymentNotification.TYPE,
-//                        new PaymentNotification(orderId, Enums.OrderStatus.PAYMENT_FAILED)
-//                );
-//            }
-//
-//            // this time the checkout is finished, send transaction mark to driver
-//            Utils.notifyTransactionComplete(context,
-//                    Enums.TransactionType.CUSTOMER_SESSION.toString(),
-//                    String.valueOf(customerId),
-//                    customerId,
-//                    transactionID,
-//                    String.valueOf(customerId),
-//                    Enums.MarkStatus.NOT_ACCEPTED,
-//                    "payment");
-//
-//            String log2 = getPartionText(context.self().id())
-//                    + "checkout fail, " + "tid : " + transactionID + "\n";
-//            printLog(log2);
-////            logger.info("[success] {tid=" + transactionID + "} checkout (fail), paymentFn " + context.self().id());
-//
-//        }
-//
-//        String log__ = getPartionText(context.self().id())
-//                + "send payment paymentResult to stock for order: " + uniqueOrderID
-//                + " sending finished \n";
-////        showLogPrt(log__);
-//    }
-//
-//    private void printLog(String log) {
-//        System.out.println(log);
-//    }
+        // create payment tuple
+        List<OrderPayment> orderPayments = new ArrayList<OrderPayment>();
+        OrderPaymentCard card = null;
+        if (cc || customerCheckout.getPaymentType().equals(Enums.PaymentType.DEBIT_CARD.toString())) {
+            OrderPayment cardPaymentLine = new OrderPayment(
+                   orderId,
+                    seq,
+                    cc ? Enums.PaymentType.CREDIT_CARD : Enums.PaymentType.DEBIT_CARD,
+                    customerCheckout.getInstallments(),
+                    invoiceIssued.getTotalInvoice(),
+                    Enums.PaymentStatus.succeeded
+            );
+
+            card = new OrderPaymentCard(orderId, seq, customerCheckout.getCardNumber(),
+                    customerCheckout.getCardHolderName(), customerCheckout.getCardExpiration(), customerCheckout.getCardBrand());
+
+            orderPayments.add(cardPaymentLine);
+            seq++;
+        }
+
+        if (invoiceIssued.getCustomerCheckout().getPaymentType().contentEquals(Enums.PaymentType.BOLETO.toString()))
+        {
+            orderPayments.add(new OrderPayment(
+                orderId,
+                seq,
+                Enums.PaymentType.BOLETO,
+                1,
+                invoiceIssued.getTotalInvoice(),
+                Enums.PaymentStatus.succeeded
+            ));
+            seq++;
+        }
+
+        // then one line for each voucher
+        for(OrderItem item : invoiceIssued.getItems())
+        {
+            if (item.getVoucher() > 0)
+            {
+                orderPayments.add(new OrderPayment(
+                        orderId,
+                        seq,
+                        Enums.PaymentType.VOUCHER,
+                        1,
+                        item.getVoucher(),
+                        Enums.PaymentStatus.succeeded
+                ));
+                seq++;
+            }
+        }
+
+        // send message to stock
+        for (OrderItem item : invoiceIssued.getItems()) {
+            Message paymentStockMsg =
+                    MessageBuilder.forAddress(StockFn.TYPE, String.valueOf(item.getSellerId())+'/'+item.getProductId())
+                            .withCustomType(StockMessages.PAYMENT_STOCK_EVENT_TYPE, new PaymentStockEvent(item.getQuantity(), Enums.PaymentStatus.succeeded))
+                            .build();
+            context.send(paymentStockMsg);
+        }
+
+        List<Integer> sellerIds = invoiceIssued.getItems().stream().map(OrderItem::getSellerId).distinct().collect(Collectors.toList());
+
+        PaymentNotification paymentNotification = new PaymentNotification(orderId, Enums.PaymentStatus.succeeded);
+        // TODO seller dashboard implemented via code or data stream? if via code, need to send all order items
+        for (int sellerId : sellerIds) {
+            Message paymentSellerMsg =
+                    MessageBuilder.forAddress(SellerFn.TYPE, String.valueOf(sellerId))
+                            .withCustomType(OrderMessages.PAYMENT_NOTIFICATION_TYPE,
+                                    paymentNotification)
+                            .build();
+            context.send(paymentSellerMsg);
+        }
+
+        Message paymentOrderMsg =
+                MessageBuilder.forAddress(OrderFn.TYPE, context.self().id())
+                        .withCustomType(OrderMessages.PAYMENT_NOTIFICATION_TYPE,
+                                paymentNotification)
+                        .build();
+        context.send(paymentOrderMsg);
+
+        Message paymentCustomerMsg =
+                MessageBuilder.forAddress(CustomerFn.TYPE, context.self().id())
+                        .withCustomType(NotifyCustomer.TYPE,
+                                new NotifyCustomer(Enums.CustomerNotificationType.notify_success_payment))
+                        .build();
+        context.send(paymentCustomerMsg);
+
+        PaymentConfirmed paymentConfirmed = new PaymentConfirmed(orderId, invoiceIssued.getTotalInvoice(), invoiceIssued.getItems(), now, customerCheckout.getInstanceId());
+
+        Message paymentShipmentMsg =
+                MessageBuilder.forAddress(ShipmentFn.TYPE,
+                        String.valueOf(
+                            Utils.getShipmentActorID(
+                                    Integer.parseInt( context.self().id()), Constants.nShipmentPartitions) ) )
+                        .withCustomType(ShipmentMessages.PAYMENT_CONFIRMED_TYPE,
+                                paymentConfirmed)
+                        .build();
+        context.send(paymentShipmentMsg);
+    }
+
 }

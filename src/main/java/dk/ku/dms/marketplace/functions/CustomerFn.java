@@ -1,8 +1,8 @@
 package dk.ku.dms.marketplace.functions;
 
 import dk.ku.dms.marketplace.entities.Customer;
-import dk.ku.dms.marketplace.messages.MsgToCustomer.NotifyCustomer;
 import dk.ku.dms.marketplace.messages.MsgToSeller.DeliveryNotification;
+import dk.ku.dms.marketplace.messages.customer.NotifyCustomer;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
@@ -55,8 +55,7 @@ public final class CustomerFn implements StatefulFunction {
 
     private void onHandleNotifyCustomer(Context context, Message message) {
         NotifyCustomer notifyCustomer = message.as(NotifyCustomer.TYPE);
-        int customerId = notifyCustomer.getCustomerId();
-        Enums.NotificationType notificationType = notifyCustomer.getNotifyType();
+        Enums.CustomerNotificationType notificationType = notifyCustomer.getNotifyType();
         Customer customer = getCustomerState(context);
         switch (notificationType) {
             case notify_success_payment:

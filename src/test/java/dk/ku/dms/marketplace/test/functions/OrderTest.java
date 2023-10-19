@@ -2,12 +2,9 @@ package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.CustomerCheckout;
-import dk.ku.dms.marketplace.entities.Order;
-import dk.ku.dms.marketplace.entities.StockItem;
 import dk.ku.dms.marketplace.functions.CartFn;
 import dk.ku.dms.marketplace.functions.OrderFn;
 import dk.ku.dms.marketplace.functions.StockFn;
-import dk.ku.dms.marketplace.messages.cart.CartMessages;
 import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
@@ -15,7 +12,6 @@ import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
-import dk.ku.dms.marketplace.states.CartState;
 import dk.ku.dms.marketplace.states.OrderState;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.Address;
@@ -27,7 +23,6 @@ import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class OrderTest {

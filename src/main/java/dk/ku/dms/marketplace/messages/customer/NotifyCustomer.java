@@ -1,4 +1,4 @@
-package dk.ku.dms.marketplace.messages.MsgToCustomer;
+package dk.ku.dms.marketplace.messages.customer;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,29 +11,20 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
 public class NotifyCustomer {
-    
 
     public static final Type<NotifyCustomer> TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "NotifyCustomer"),
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, NotifyCustomer.class));
-
-    @JsonProperty("customerId") private int customerId;
-    @JsonProperty("notifyType") private Enums.NotificationType notifyType;
+    @JsonProperty("notifyType") private Enums.CustomerNotificationType notifyType;
 
     @JsonCreator
-    public NotifyCustomer(@JsonProperty("customerId") int customerId,
-                          @JsonProperty("notifyType") Enums.NotificationType notifyType) {
-        this.customerId = customerId;
+    public NotifyCustomer(@JsonProperty("notifyType") Enums.CustomerNotificationType notifyType) {
         this.notifyType = notifyType;
     }
 
-    public int getCustomerId() {
-        return customerId;
-    }
-
-    public Enums.NotificationType getNotifyType() {
+    public Enums.CustomerNotificationType getNotifyType() {
 
         return notifyType;
     }

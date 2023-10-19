@@ -1,4 +1,14 @@
-//package dk.ku.dms.marketplace.functions;
+package dk.ku.dms.marketplace.functions;
+
+import org.apache.flink.statefun.sdk.java.Context;
+import org.apache.flink.statefun.sdk.java.StatefulFunction;
+import org.apache.flink.statefun.sdk.java.TypeName;
+import org.apache.flink.statefun.sdk.java.message.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
+
 //
 //import dk.ku.dms.marketplace.common.entity.*;
 //import dk.ku.dms.marketplace.common.utils.PostgreHelper;
@@ -27,11 +37,11 @@
 //
 //import static java.lang.Thread.sleep;
 //
-//public class SellerFn implements StatefulFunction {
-//
-//    Logger logger = Logger.getLogger("SellerFn");
-//
-//    static final TypeName TYPE = TypeName.typeNameOf(Constants.FUNCTIONS_NAMESPACE, "seller");
+public class SellerFn implements StatefulFunction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SellerFn.class);
+
+    static final TypeName TYPE = TypeName.typeNameFromString("marketplace/seller");
 //
 //    static final ValueSpec<SellerState> SELLERSTATE = ValueSpec.named("sellerState").withCustomType(SellerState.TYPE);
 //    //  Contains all the information needed to create a function instance
@@ -58,8 +68,8 @@
 //        }
 //    }
 //
-//    @Override
-//    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
+    @Override
+    public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
 //        try {
 //            // client ---> seller (init seller type)
 //            if (message.is(InitSeller.TYPE)) {
@@ -105,8 +115,8 @@
 //            e.printStackTrace();
 //        }
 //
-//        return context.done();
-//    }
+        return context.done();
+    }
 //
 //    private void showLog(String log) {
 //        logger.info(log);
@@ -317,4 +327,4 @@
 //        }
 //
 //    }
-//}
+}

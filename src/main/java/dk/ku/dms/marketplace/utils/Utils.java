@@ -42,4 +42,9 @@ public class Utils {
     			.append(timestamp.toString()).append('-')
     			.append(orderId).toString();
     }
+
+    public static int getShipmentActorID(int customerId, int NumShipmentActors){
+        return customerId % NumShipmentActors;
+    }
+
 }
