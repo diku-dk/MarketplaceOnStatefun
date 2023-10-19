@@ -16,10 +16,7 @@ import dk.ku.dms.marketplace.states.OrderState;
 import dk.ku.dms.marketplace.utils.Enums;
 import dk.ku.dms.marketplace.utils.Enums.OrderStatus;
 import dk.ku.dms.marketplace.utils.Utils;
-import org.apache.flink.statefun.sdk.java.Context;
-import org.apache.flink.statefun.sdk.java.StatefulFunction;
-import org.apache.flink.statefun.sdk.java.TypeName;
-import org.apache.flink.statefun.sdk.java.ValueSpec;
+import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
@@ -30,27 +27,22 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.stream.Collectors.groupingBy;
+
 public class OrderFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(OrderFn.class);
 
     public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/order");
 
-    // generate unique Identifier
     public static final ValueSpec<Integer> NEXT_ORDER_ID_STATE = ValueSpec.named("nextOrderId").withIntType();
-    // static final ValueSpec<Integer> ORDERHISTORYIDSTATE = ValueSpec.named("orderHistoryId").withIntType();
-    // store checkout info
-//    static final ValueSpec<CustomerCheckoutInfoState> TEMPCKINFOSTATE = ValueSpec.named("tempCKInfoState").withCustomType(CustomerCheckoutInfoState.TYPE);
-//    // tmp store async task state
-//    static final ValueSpec<ReserveStockTaskState> ASYNCTASKSTATE = ValueSpec.named("asyncTaskState").withCustomType(ReserveStockTaskState.TYPE);
-//
-//    // store order info
+
     public static final ValueSpec<OrderState> ORDER_STATE = ValueSpec.named("order").withCustomType(OrderState.TYPE);
 
-//    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
-//            .withValueSpecs(ORDERIDSTATE, ASYNCTASKSTATE, TEMPCKINFOSTATE, ORDERSTATE, ORDERHISTORYIDSTATE)
-//            .withSupplier(OrderFn::new)
-//            .build();
+    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
+            .withValueSpecs(NEXT_ORDER_ID_STATE, ORDER_STATE)
+            .withSupplier(OrderFn::new)
+            .build();
 
     private static Connection conn;
 
@@ -96,18 +88,6 @@ public class OrderFn implements StatefulFunction {
         return context.done();
     }
 
-//    ===============================================================================
-//                                  helper functions
-//    ===============================================================================
-
-//    private ReserveStockTaskState getAtptResvTaskState(Context context) {
-//        return context.storage().get(ASYNCTASKSTATE).orElse(new ReserveStockTaskState());
-//    }
-//
-//    private CustomerCheckoutInfoState getTempCKInfoState(Context context) {
-//        return context.storage().get(TEMPCKINFOSTATE).orElse(new CustomerCheckoutInfoState());
-//    }
-//
     private OrderState getOrderState(Context context) {
         return context.storage().get(ORDER_STATE).orElse(new OrderState());
     }
@@ -294,18 +274,7 @@ public class OrderFn implements StatefulFunction {
         
         orderState.addOrder(orderId, order, items, orderHistory);
         
-        Map<Integer, List<OrderItem>> itemsPerSeller = new HashMap<>();
-        
-        for (OrderItem item : items) 
-        {
-        	int sellerId = item.getSellerId();
-        	
-        	List<OrderItem> list = new ArrayList<>();
-        	if (itemsPerSeller.containsKey(sellerId)) list = itemsPerSeller.get(sellerId);
-        	else itemsPerSeller.put(sellerId, list);
-        	
-        	list.add(item);
-        }
+        Map<Integer, List<OrderItem>> itemsPerSeller = items.stream().collect(groupingBy(OrderItem::getSellerId));
 
         // send a message to each related seller (stock function)
         for (Map.Entry<Integer, List<OrderItem>> entry : itemsPerSeller.entrySet())
@@ -344,7 +313,7 @@ public class OrderFn implements StatefulFunction {
 
         context.send(invoiceIssuedMsg);
     }
-//
+
 //    private void ProcessShipmentNotification(Context context, Message message) throws SQLException, JsonProcessingException {
 //
 //        OrderState orderState = getOrderState(context);

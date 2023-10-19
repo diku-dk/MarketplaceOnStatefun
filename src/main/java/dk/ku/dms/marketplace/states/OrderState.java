@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OrderState {
+public final class OrderState {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 

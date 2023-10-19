@@ -10,21 +10,28 @@ import dk.ku.dms.marketplace.utils.Enums;
 
 import java.time.LocalDateTime;
 
+public final class Package {
 
-
-public class Package {
-    @JsonProperty("packageId") private int packageId;
-    @JsonProperty("orderId") private int orderId;
-    @JsonProperty("shipmentId") private int shipmentId;
-
+    @JsonProperty("packageId")
+    private final int packageId;
+    @JsonProperty("orderId")
+    private final int orderId;
+    @JsonProperty("shipmentId")
+    private final int shipmentId;
     // FK
     // product identification
-    @JsonProperty("sellerId")  public int sellerId;
-    @JsonProperty("productId") public int productId;
-    @JsonProperty("freightValue") public float freightValue;
-    @JsonProperty("quantity") public int quantity;
-    @JsonProperty("productName") public String productName;
-    @JsonProperty("packageStatus") public Enums.PackageStatus packageStatus;
+    @JsonProperty("sellerId")
+    private final int sellerId;
+    @JsonProperty("productId")
+    private final int productId;
+    @JsonProperty("freightValue")
+    private final float freightValue;
+    @JsonProperty("quantity")
+    private final int quantity;
+    @JsonProperty("productName")
+    private final String productName;
+    @JsonProperty("packageStatus")
+    private Enums.PackageStatus packageStatus;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -34,7 +41,7 @@ public class Package {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("shipping_date")
-    private LocalDateTime shipping_date;
+    private final LocalDateTime shipping_date;
 
     @JsonCreator
     public Package(
@@ -62,5 +69,13 @@ public class Package {
 
     public int getSellerId() {
         return this.sellerId;
+    }
+
+    public int getShipmentId() {
+        return shipmentId;
+    }
+
+    public Enums.PackageStatus getPackageStatus() {
+        return packageStatus;
     }
 }

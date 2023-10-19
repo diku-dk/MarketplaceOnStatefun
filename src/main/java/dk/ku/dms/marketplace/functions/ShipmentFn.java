@@ -1,55 +1,28 @@
 package dk.ku.dms.marketplace.functions;
 
-import org.apache.flink.statefun.sdk.java.Context;
-import org.apache.flink.statefun.sdk.java.StatefulFunction;
-import org.apache.flink.statefun.sdk.java.TypeName;
+import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
+import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
+import dk.ku.dms.marketplace.states.ShipmentState;
+import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 
-//import dk.ku.dms.marketplace.common.entity.*;
-//import dk.ku.dms.marketplace.common.entity.Package;
-//import dk.ku.dms.marketplace.common.utils.PostgreHelper;
-//import dk.ku.dms.marketplace.common.utils.Utils;
-//import dk.ku.dms.marketplace.constants.Enums;
-//import dk.ku.dms.marketplace.constants.Constants;
-//import dk.ku.dms.marketplace.types.State.ShipmentState;
-//import com.fasterxml.jackson.core.JsonProcessingException;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import org.apache.flink.statefun.sdk.java.*;
-//import dk.ku.dms.marketplace.types.MsgToOrderFn.ShipmentNotification;
-//import dk.ku.dms.marketplace.types.MsgToSeller.DeliveryNotification;
-//import dk.ku.dms.marketplace.types.MsgToShipment.GetPendingPackages;
-//import dk.ku.dms.marketplace.types.MsgToShipment.ProcessShipment;
-//import dk.ku.dms.marketplace.types.MsgToShipment.UpdateShipment;
-//import org.apache.flink.statefun.sdk.java.message.Message;
-//
-//import java.sql.Connection;
-//import java.sql.SQLException;
-//import java.sql.Statement;
-//import java.time.LocalDateTime;
-//import java.util.*;
-//import java.util.concurrent.CompletableFuture;
-//import java.util.logging.Logger;
-//import java.util.stream.Collectors;
-//
 public class ShipmentFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(ShipmentFn.class);
 //
     static final TypeName TYPE = TypeName.typeNameFromString("marketplace/shipment");
+    static final ValueSpec<ShipmentState> SHIPMENT_STATE = ValueSpec.named("shipmentState").withCustomType(ShipmentState.TYPE);
 //
-//    static final ValueSpec<Integer> SHIPMENTIDSTATE = ValueSpec.named("shipmentIdState").withIntType();
-//    static final ValueSpec<ShipmentState> SHIPMENT_STATE = ValueSpec.named("shipmentState").withCustomType(ShipmentState.TYPE);
-//
-//    //  Contains all the information needed to create a function instance
-//    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
-//            .withValueSpecs(SHIPMENTIDSTATE, SHIPMENT_STATE)
-//            .withSupplier(ShipmentFn::new)
-//            .build();
-//
+    //  Contains all the information needed to create a function instance
+    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
+            .withValueSpec(SHIPMENT_STATE)
+            .withSupplier(ShipmentFn::new)
+            .build();
+
 //    private static Connection conn;
 //
 //    private final ObjectMapper objectMapper = new ObjectMapper();
@@ -66,53 +39,33 @@ public class ShipmentFn implements StatefulFunction {
 //
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
-//        try {
-//            if (message.is(ProcessShipment.TYPE)) {
-//                onProcessShipment(context, message);
-//            } else if (message.is(GetPendingPackages.TYPE)) {
+        try {
+            if (message.is(ShipmentMessages.PAYMENT_CONFIRMED_TYPE)) {
+                onProcessShipment(context, message);
+            }
+//            else if (message.is(GetPendingPackages.TYPE)) {
 //                onGetPendingPackages(context, message);
 //            } else if (message.is(UpdateShipment.TYPE)) {
 //                onUpdateShipment(context, message);
 //            }
-//        } catch (Exception e) {
-//            System.out.println("ShipmentFn Exception !!!!!!!!!!!!!!!!");
-//        }
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
         return context.done();
     }
-//
-//    private int generateNextShipmentId(Context context) {
-//        int shipmentId = context.storage().get(SHIPMENTIDSTATE).orElse(0) + 1;
-//        context.storage().set(SHIPMENTIDSTATE, shipmentId);
-//        return shipmentId;
-//    }
-//
-//    private String getPartionText(String id) {
-//        return String.format("[ ShipmentFn partitionId %s ] ", id);
-//    }
+
 //
 //    private ShipmentState getShipmentState(Context context) {
 //        return context.storage().get(SHIPMENT_STATE).orElse(new ShipmentState());
 //    }
 //
-//    private void showLog(String log) {
-//        logger.info(log);
-////        System.out.println(log);
-//    }
-//
-//    private void showLogPrt(String log) {
-////        logger.info(log);
-//        System.out.println(log);
-//    }
-//
-//    private void onProcessShipment(Context context, Message message) {
-//        ProcessShipment processShipment = message.as(ProcessShipment.TYPE);
+    private void onProcessShipment(Context context, Message message) {
+        PaymentConfirmed paymentConfirmed = message.as(ShipmentMessages.PAYMENT_CONFIRMED_TYPE);
 //        Invoice invoice = processShipment.getInvoice();
 //        CustomerCheckout customerCheckout = invoice.getCustomerCheckout();
 //        int customerId = customerCheckout.getCustomerId();
 //        int transactionID = processShipment.getInstanceId();
 //        LocalDateTime now = LocalDateTime.now();
-////        String log = getPartionText(context.self().id()) + "ShipmentFn: onProcessShipment: " + processShipment.toString();
-////        logger.info(log);
 //
 //        // The Java equivalent code
 //        List<OrderItem> invoiceItems = invoice.getItems();
@@ -217,16 +170,9 @@ public class ShipmentFn implements StatefulFunction {
 //                String.valueOf(customerId),
 //                Enums.MarkStatus.SUCCESS,
 //                "shipment");
+    }
 //
-//        String log2 = getPartionText(context.self().id())
-//                + "checkout success, " + "tid : " + transactionID + "\n";
-//        printLog(log2);
-////        logger.info("[success] {tid=" + transactionID + "} checkout (success), shipmentFn " + context.self().id());
-//    }
-//
-//    private void printLog(String log) {
-//        System.out.println(log);
-//    }
+
 //
 //    private void onGetPendingPackages(Context context, Message message) {
 //        int sellerId = message.as(GetPendingPackages.TYPE).getSellerID();

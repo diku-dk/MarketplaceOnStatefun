@@ -36,16 +36,11 @@ public class PaymentFn implements StatefulFunction {
     private static final Logger LOG = LoggerFactory.getLogger(PaymentFn.class);
 
     public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/payment");
-//
-//    public static final ValueSpec<PaymentState> PAYMENT_STATE = ValueSpec.named("paymentState").withCustomType(PaymentState.TYPE);
-//
+
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
             .withSupplier(PaymentFn::new)
-            // .withValueSpecs(PAYMENT_STATE)
             .build();
-//
-////    PaymentService paymentService = new DummyPaymentServiceService();
-//
+
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         LOG.info("Payment "+context.self().id()+" received!");
@@ -55,8 +50,7 @@ public class PaymentFn implements StatefulFunction {
                 onProcessPayment(context, message);
             }
         } catch (Exception e) {
-            System.out.println("PaymentFn Exception !!!!!!!!!!!!!!!!");
-            e.printStackTrace();
+            LOG.error(e.getMessage());
         }
         return context.done();
     }

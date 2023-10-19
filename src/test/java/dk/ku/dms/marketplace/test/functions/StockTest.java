@@ -25,9 +25,9 @@ import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
 public class StockTest {
 
-
     @Test
     public void testSetStockItem() throws Throwable {
+
         Address self = new Address(StockFn.TYPE, "1/1");
         TestContext context = TestContext.forTarget(self);
 
@@ -101,7 +101,6 @@ public class StockTest {
 
         // set initial state
         context.storage().set(StockFn.STOCK_STATE, stockItem);
-
 
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "2");
         AttemptReservationEvent event = new AttemptReservationEvent(1,item);

@@ -74,12 +74,6 @@ public class OrderTest {
 
         TestContext context = TestContext.forTargetWithCaller(orderAddress, stockAddress);
 
-//        StockItem stockItem = new StockItem(1,1,10, 0,
-//                0, 1, "test",  "1");
-//
-//        // set initial state
-//        context.storage().set(StockFn.STOCK_STATE, stockItem);
-
         OrderState orderState = new OrderState();
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "0");
 
@@ -109,7 +103,7 @@ public class OrderTest {
 
         List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
 
-        assert(sentMessages.size() == 1);
+        assert(sentMessages.size() == 2);
 
         assert(sentMessages.get(0).message().is(PaymentMessages.INVOICE_ISSUED_TYPE));
 
