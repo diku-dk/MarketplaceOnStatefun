@@ -10,7 +10,6 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 
 import java.util.HashMap;
 
-
 public class ShipmentProxyState {
 
     private static final ObjectMapper mapper = new ObjectMapper();

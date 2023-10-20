@@ -1,8 +1,9 @@
 package dk.ku.dms.marketplace.functions;
 
 import dk.ku.dms.marketplace.entities.Customer;
-import dk.ku.dms.marketplace.messages.MsgToSeller.DeliveryNotification;
+import dk.ku.dms.marketplace.messages.customer.CustomerMessages;
 import dk.ku.dms.marketplace.messages.customer.NotifyCustomer;
+import dk.ku.dms.marketplace.messages.seller.SellerMessages;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
@@ -31,14 +32,14 @@ public final class CustomerFn implements StatefulFunction {
                 Customer customer = message.as(Customer.TYPE);
                 context.storage().set(CUSTOMER_STATE, customer);
             }
-            // ShippmentFn ---> customer (notify shipped type)
+            // ShipmentFn ---> customer (notify shipped type)
             // OrderFn / PaymentFn ---> customer (notify failed payment type)
             // PaymentFn ---> customer (notify success payment type)
-            else if (message.is(NotifyCustomer.TYPE)) {
+            else if (message.is(CustomerMessages.TYPE)) {
                 onHandleNotifyCustomer(context, message);
             }
-            else if (message.is(DeliveryNotification.TYPE)) {
-                onHandleDeliveryNotification(context, message);
+            else if (message.is(SellerMessages.DELIVERY_NOTIFICATION_TYPE)) {
+                onHandleDeliveryNotification(context);
             }
             else {
                 LOG.error("Message unknown: "+message);
@@ -54,7 +55,7 @@ public final class CustomerFn implements StatefulFunction {
     }
 
     private void onHandleNotifyCustomer(Context context, Message message) {
-        NotifyCustomer notifyCustomer = message.as(NotifyCustomer.TYPE);
+        NotifyCustomer notifyCustomer = message.as(CustomerMessages.TYPE);
         Enums.CustomerNotificationType notificationType = notifyCustomer.getNotifyType();
         Customer customer = getCustomerState(context);
         switch (notificationType) {
@@ -62,16 +63,15 @@ public final class CustomerFn implements StatefulFunction {
                 customer.incrementSuccessPaymentCount();
                 break;
             // use in 2 case: fail order and fail payment
-            case notify_fail_checkout:
             case notify_failed_payment:
+            case notify_fail_checkout:
                 customer.incrementFailedPaymentCount();
-                break;
         }
 
         context.storage().set(CUSTOMER_STATE, customer);
     }
 
-    private void onHandleDeliveryNotification(Context context, Message message) {
+    private void onHandleDeliveryNotification(Context context) {
         Customer customer = getCustomerState(context);
         customer.incrementDeliveryCount();
         context.storage().set(CUSTOMER_STATE, customer);

@@ -4,6 +4,7 @@ import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.OrderPayment;
 import dk.ku.dms.marketplace.entities.OrderPaymentCard;
+import dk.ku.dms.marketplace.messages.customer.CustomerMessages;
 import dk.ku.dms.marketplace.messages.customer.NotifyCustomer;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.order.PaymentNotification;
@@ -149,7 +150,7 @@ public final class PaymentFn implements StatefulFunction {
 
         Message paymentCustomerMsg =
                 MessageBuilder.forAddress(CustomerFn.TYPE, context.self().id())
-                        .withCustomType(NotifyCustomer.TYPE,
+                        .withCustomType(CustomerMessages.TYPE,
                                 new NotifyCustomer(Enums.CustomerNotificationType.notify_success_payment))
                         .build();
         context.send(paymentCustomerMsg);

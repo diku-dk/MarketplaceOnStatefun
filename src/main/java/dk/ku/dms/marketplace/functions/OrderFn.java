@@ -74,10 +74,9 @@ public final class OrderFn implements StatefulFunction {
 //                PaymentNotification info = message.as(PaymentNotification.TYPE);
 //                UpdateOrderStatus(context, info.getOrderId(), info.getOrderStatus());
 //            }
-//            else if (message.is(ShipmentNotification.TYPE))
-//            {
-//                ProcessShipmentNotification(context, message);
-//            }
+            else if (message.is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE)) {
+                onShipmentNotification(context, message);
+            }
 //            else if (message.is(Cleanup.TYPE))
 //            {
 //                onCleanup(context);
@@ -306,7 +305,7 @@ public final class OrderFn implements StatefulFunction {
         context.send(invoiceIssuedMsg);
     }
 
-//    private void ProcessShipmentNotification(Context context, Message message) throws SQLException, JsonProcessingException {
+    private void onShipmentNotification(Context context, Message message) { //throws SQLException, JsonProcessingException {
 //
 //        OrderState orderState = getOrderState(context);
 //        Map<Integer, Order> orders = orderState.getOrders();
@@ -359,7 +358,7 @@ public final class OrderFn implements StatefulFunction {
 //
 //        context.storage().set(ORDERSTATE, orderState);
 ////        UpdateOrderStatus(context, orderId, status, eventTime);
-//    }
+    }
 //
 //    private void UpdateOrderStatus(Context context, int orderId, Enums.OrderStatus status) {
 //        OrderState orderState = getOrderState(context);

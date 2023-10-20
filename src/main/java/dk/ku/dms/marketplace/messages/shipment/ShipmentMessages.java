@@ -15,4 +15,10 @@ public final class ShipmentMessages {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, PaymentConfirmed.class));
 
+    public static final Type<UpdateShipment> UPDATE_SHIPMENT_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "UpdateShipment"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, UpdateShipment.class));
+
 }

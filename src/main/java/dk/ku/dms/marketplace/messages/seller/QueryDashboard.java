@@ -1,4 +1,4 @@
-package dk.ku.dms.marketplace.messages.shipment;
+package dk.ku.dms.marketplace.messages.seller;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,20 +10,20 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
 
-public class GetPendingPackages {
+public class QueryDashboard {
     
 
-    public static final Type<GetPendingPackages> TYPE =
+    public static final Type<QueryDashboard> TYPE =
             SimpleType.simpleImmutableTypeFrom(
-                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "GetPendingPackages"),
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "QueryDashboard"),
                     mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, GetPendingPackages.class));
+                    bytes -> mapper.readValue(bytes, QueryDashboard.class));
 
-    @JsonProperty("sellerID")
-    private int sellerID;
+    @JsonProperty("tid")
+    private int tid;
 
     @JsonCreator
-    public GetPendingPackages(@JsonProperty("sellerID") int sellerID) {
-        this.sellerID = sellerID;
+    public QueryDashboard(@JsonProperty("instanceId") int tid) {
+        this.tid = tid;
     }
 }

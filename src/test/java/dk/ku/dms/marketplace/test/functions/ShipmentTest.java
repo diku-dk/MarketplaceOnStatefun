@@ -3,12 +3,17 @@ package dk.ku.dms.marketplace.test.functions;
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.entities.Package;
+import dk.ku.dms.marketplace.entities.Shipment;
 import dk.ku.dms.marketplace.entities.TransactionMark;
 import dk.ku.dms.marketplace.functions.ShipmentFn;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
+import dk.ku.dms.marketplace.messages.seller.SellerMessages;
 import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
 import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
+import dk.ku.dms.marketplace.messages.shipment.UpdateShipment;
+import dk.ku.dms.marketplace.states.ShipmentState;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.Address;
 import org.apache.flink.statefun.sdk.java.message.Message;
@@ -72,6 +77,51 @@ public class ShipmentTest {
 
         ShipmentNotification shipmentNotification = sentMessages.get(0).message().as(OrderMessages.SHIPMENT_NOTIFICATION_TYPE);
         assert (shipmentNotification.getOrderId() == 1);
+
+    }
+
+    @Test
+    public void testDelivery() throws Throwable {
+
+        // Arrange
+        Address self = new Address(ShipmentFn.TYPE, "1");
+
+        TestContext context = TestContext.forTarget(self);
+
+        ShipmentState shipmentState = new ShipmentState();
+
+        Shipment shipment = new Shipment(1, 1, 1, 1, 1, LocalDateTime.now(),
+                Enums.ShipmentStatus.APPROVED, "test", "test", "test", "test", "test", "test" );
+
+        Package package_ = new Package(1,1,1,1,1,1,1,"test", LocalDateTime.now(), Enums.PackageStatus.SHIPPED);
+        List<Package> packages = new ArrayList<>();
+        packages.add(package_);
+
+        shipmentState.getShipments().put(shipment.getShipmentId(),shipment);
+        shipmentState.getPackages().put(shipment.getShipmentId(), packages);
+
+        // set initial state
+        context.storage().set(ShipmentFn.SHIPMENT_STATE, shipmentState);
+
+        // Action
+        ShipmentFn function = new ShipmentFn();
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(ShipmentMessages.UPDATE_SHIPMENT_TYPE, new UpdateShipment(1))
+                .build();
+
+        function.apply(context, message);
+
+        List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
+
+        assert (sentMessages.size() == 3);
+
+        assert(sentMessages.get(0).message().is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE));
+        assert(sentMessages.get(1).message().is(SellerMessages.DELIVERY_NOTIFICATION_TYPE));
+        assert(sentMessages.get(2).message().is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE));
+
+        assert(context.storage().get(ShipmentFn.SHIPMENT_STATE).isPresent()
+                && context.storage().get(ShipmentFn.SHIPMENT_STATE).get().getShipments().get(1).getStatus() == Enums.ShipmentStatus.CONCLUDED);
 
     }
 

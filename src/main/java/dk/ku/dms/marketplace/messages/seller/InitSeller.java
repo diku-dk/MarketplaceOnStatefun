@@ -1,7 +1,8 @@
-package dk.ku.dms.marketplace.messages.MsgToSeller;
+package dk.ku.dms.marketplace.messages.seller;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import dk.ku.dms.marketplace.entities.Seller;
 import dk.ku.dms.marketplace.utils.Constants;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
@@ -10,20 +11,24 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
 
-public class QueryDashboard {
+public class InitSeller {
+
     
 
-    public static final Type<QueryDashboard> TYPE =
+    public static final Type<InitSeller> TYPE =
             SimpleType.simpleImmutableTypeFrom(
-                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "QueryDashboard"),
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "InitSeller"),
                     mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, QueryDashboard.class));
+                    bytes -> mapper.readValue(bytes, InitSeller.class));
 
-    @JsonProperty("tid")
-    private int tid;
+    @JsonProperty("seller")
+    private Seller seller;
+
+    public InitSeller() {
+    }
 
     @JsonCreator
-    public QueryDashboard(@JsonProperty("instanceId") int tid) {
-        this.tid = tid;
+    public InitSeller(@JsonProperty("seller") Seller seller) {
+        this.seller = seller;
     }
 }

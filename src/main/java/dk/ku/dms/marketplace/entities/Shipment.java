@@ -30,7 +30,7 @@ public final class Shipment {
     @JsonProperty("zipCode")
     private final String zipCode;
     @JsonProperty("status")
-    private final Enums.ShipmentStatus status;
+    private Enums.ShipmentStatus status;
     @JsonProperty("city")
     private final String city;
     @JsonProperty("state")
@@ -69,5 +69,29 @@ public final class Shipment {
         this.zipCode = zipCode;
         this.city = city;
         this.state = state;
+    }
+
+    public int getShipmentId() {
+        return shipmentId;
+    }
+
+    public int getPackageCount() {
+        return packageCount;
+    }
+
+    public Enums.ShipmentStatus getStatus() {
+        return this.status;
+    }
+
+    public void setStatus(Enums.ShipmentStatus status) {
+        this.status = status;
+    }
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public int getCustomerId() {
+        return customerId;
     }
 }

@@ -78,4 +78,28 @@ public final class Package {
     public Enums.PackageStatus getPackageStatus() {
         return packageStatus;
     }
+
+    public int getPackageId() {
+        return packageId;
+    }
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public void setPackageStatus(Enums.PackageStatus packageStatus) {
+        this.packageStatus = packageStatus;
+    }
+
+    public void setDeliveredTime(LocalDateTime deliveredTime) {
+        this.delivered_time = deliveredTime;
+    }
+
+    public String getProductName() {
+        return this.productName;
+    }
 }

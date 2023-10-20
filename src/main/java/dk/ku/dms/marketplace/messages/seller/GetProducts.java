@@ -1,4 +1,4 @@
-package dk.ku.dms.marketplace.messages.MsgToSeller;
+package dk.ku.dms.marketplace.messages.seller;
 
 import dk.ku.dms.marketplace.utils.Constants;
 import org.apache.flink.statefun.sdk.java.TypeName;
