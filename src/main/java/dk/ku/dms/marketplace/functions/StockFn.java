@@ -110,16 +110,13 @@ public final class StockFn implements StatefulFunction {
 
         AttemptReservationEvent attemptReservationEvent = message.as(StockMessages.ATTEMPT_RESERVATION_TYPE);
         CartItem cartItem = attemptReservationEvent.getCartItem();
-        int productId = cartItem.getProductId();
-        int quantity = cartItem.getQuantity();
-        String version = cartItem.getVersion();
 
-        Enums.ItemStatus status = getItemStatus(context, quantity, version);
+        Enums.ItemStatus status = getItemStatus(context, cartItem.getQuantity(), cartItem.getVersion());
 
         final Optional<Address> caller = context.caller();
         if (caller.isPresent()) {
             AttemptReservationResponse resp =
-                    new AttemptReservationResponse(attemptReservationEvent.getOrderId(), cartItem.getSellerId(), productId, status);
+                    new AttemptReservationResponse(attemptReservationEvent.getOrderId(), cartItem.getSellerId(), cartItem.getProductId(), status, attemptReservationEvent.getIdx());
             final Message request = MessageBuilder.forAddress(StockFn.TYPE, caller.get().id())
                                                     .withCustomType(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE, resp)
                                                     .build();

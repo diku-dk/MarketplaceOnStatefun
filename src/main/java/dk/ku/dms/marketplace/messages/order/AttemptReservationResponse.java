@@ -19,16 +19,21 @@ public final class AttemptReservationResponse {
     @JsonProperty("status")
     private final Enums.ItemStatus status;
 
+    @JsonProperty("idx")
+    private final int idx;
+
     @JsonCreator
     public AttemptReservationResponse(@JsonProperty("orderId") int orderId,
                                       @JsonProperty("sellerId") int sellerId,
                                       @JsonProperty("productId") int productId,
-                                      @JsonProperty("status") Enums.ItemStatus status)
+                                      @JsonProperty("status") Enums.ItemStatus status,
+                                      @JsonProperty("idx") int idx)
     {
         this.orderId = orderId;
         this.sellerId = sellerId;
         this.productId = productId;
         this.status = status;
+        this.idx = idx;
     }
 
     @JsonIgnore
@@ -51,12 +56,9 @@ public final class AttemptReservationResponse {
         return status;
     }
 
-    @Override
-    public String toString() {
-        return "AttemptReservationResponse{" +
-                "sellerId=" + sellerId +
-                ", productId=" + productId +
-                ", status=" + status +
-                '}';
+    @JsonIgnore
+    public int getIdx() {
+        return idx;
     }
+
 }

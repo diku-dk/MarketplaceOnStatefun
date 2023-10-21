@@ -13,12 +13,17 @@ public final class AttemptReservationEvent {
     @JsonProperty("cartItem")
     private final CartItem cartItem;
 
+    @JsonProperty("idx")
+    private final int idx;
+
     @JsonCreator
     public AttemptReservationEvent(@JsonProperty("orderId") int orderId,
-                                    @JsonProperty("cartItem") CartItem cartItem)
+                                    @JsonProperty("cartItem") CartItem cartItem,
+                                   @JsonProperty("idx") int idx)
     {
         this.orderId = orderId;
         this.cartItem = cartItem;
+        this.idx = idx;
     }
 
     @JsonIgnore
@@ -31,11 +36,8 @@ public final class AttemptReservationEvent {
         return cartItem;
     }
 
-    @Override
-    public String toString() {
-        return "AttemptReservationEvent{" +
-                "orderId=" + orderId +
-                ", cartItem=" + cartItem.toString() +
-                '}';
+    @JsonIgnore
+    public int getIdx() {
+        return idx;
     }
 }

@@ -63,11 +63,11 @@ public final class OrderFn implements StatefulFunction {
         try {
             // cart --> order, (checkout request)
             if (message.is(OrderMessages.CHECKOUT_REQUEST_TYPE)) {
-                ReserveStockAsync(context, message);
+                onCheckoutRequest(context, message);
             }
             // stock --> order, (checkout response)
             else if (message.is(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE)) {
-                ReserveStockResult(context, message);
+                onReserveAttemptResponse(context, message);
             }
 //            // xxxx ---> order (update order status)
 //            else if (message.is(PaymentNotification.TYPE)) {
@@ -102,7 +102,7 @@ public final class OrderFn implements StatefulFunction {
 //    Attemp/Confirm/Cance  Reservation (two steps business logic)【send message to stock】
 //    ====================================================================================
 
-    private void ReserveStockAsync(Context context, Message message) {
+    private void onCheckoutRequest(Context context, Message message) {
 
         CheckoutRequest checkoutRequest = message.as(OrderMessages.CHECKOUT_REQUEST_TYPE);
 
@@ -112,14 +112,18 @@ public final class OrderFn implements StatefulFunction {
 
         orderState.getCheckouts().put(orderId, checkoutRequest);
 
+        orderState.setUpRemainingAcks(orderId, checkoutRequest.getItems().size());
+
         // send message to stock
+        int idx = 0;
         for (CartItem item : checkoutRequest.getItems()) {
-            AttemptReservationEvent attemptReservationEvent = new AttemptReservationEvent(orderId, item);
+            AttemptReservationEvent attemptReservationEvent = new AttemptReservationEvent(orderId, item, idx);
             Message attemptReservationMsg =
                     MessageBuilder.forAddress(StockFn.TYPE, String.valueOf(item.getSellerId())+'/'+item.getProductId())
                             .withCustomType(StockMessages.ATTEMPT_RESERVATION_TYPE, attemptReservationEvent)
                             .build();
             context.send(attemptReservationMsg);
+            idx++;
         }
 
         context.storage().set(ORDER_STATE, orderState);
@@ -129,47 +133,37 @@ public final class OrderFn implements StatefulFunction {
 //    ====================================================================================
 //            handle attempt reservation response 【receive message from stock】
 //    ====================================================================================
-    private void ReserveStockResult(Context context, Message message) {
+    private void onReserveAttemptResponse(Context context, Message message) {
 
         AttemptReservationResponse resp = message.as(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE);
-
-        if(resp.getStatus() != Enums.ItemStatus.IN_STOCK){
-            return;
-        }
-
         int orderId = resp.getOrderId();
-
         OrderState orderState = getOrderState(context);
-
         CheckoutRequest checkoutRequest = orderState.getCheckouts().get(orderId);
 
-        // CartItem item = checkoutRequest.getItems().stream().filter(p-> p.getSellerId() == resp.getSellerId() && p.getProductId() == resp.getProductId()).findFirst().get();
-        int idx = 0;
-        CartItem item = null;
-        for(CartItem p : checkoutRequest.getItems()){
-            if(p.getSellerId() == resp.getSellerId() && p.getProductId() == resp.getProductId()){
-                item = p;
-                break;
+        if(resp.getStatus() == Enums.ItemStatus.IN_STOCK) {
+
+            CartItem item = checkoutRequest.getItems().get(resp.getIdx());
+
+            List<OrderItem> orderItems = orderState.getOrderItems().computeIfAbsent(orderId, k -> new ArrayList<>());
+
+            float totalPrice = item.getUnitPrice() * item.getQuantity();
+            OrderItem orderItem = new OrderItem(orderId, orderItems.size() + 1, item.getProductId(), item.getProductName(), item.getSellerId(), item.getUnitPrice(), item.getFreightValue(), item.getQuantity(), totalPrice,
+                    totalPrice - item.getVoucher(), LocalDateTime.now().plusDays(1));
+
+            orderItems.add(orderItem);
+        }
+
+        // all acks have been received
+        if(orderState.decreaseRemainingItems(orderId) == 0){
+            orderState.setDownRemainingAcks(orderId);
+
+            // only proceed if at least one item has been reserved
+            if(orderState.getOrderItems().containsKey(orderId)) {
+                generateOrder(context, checkoutRequest, orderState, orderId);
+            } else {
+                // otherwise clean state for this order id
+                orderState.cleanState(orderId);
             }
-            idx++;
-        }
-
-        if(item == null) {
-            LOG.error("Cart item not found!");
-            return;
-        }
-        checkoutRequest.getItems().remove(idx);
-
-        List<OrderItem> orderItems = orderState.getOrderItems().computeIfAbsent(orderId, k -> new ArrayList<>());
-
-        float totalPrice = item.getUnitPrice() * item.getQuantity();
-        OrderItem orderItem = new OrderItem(orderId, orderItems.size() + 1, item.getProductId(), item.getProductName(), item.getSellerId(), item.getUnitPrice(), item.getFreightValue(), item.getQuantity(), totalPrice,
-                totalPrice - item.getVoucher(), LocalDateTime.now().plusDays(1) );
-
-        orderItems.add(orderItem);
-
-        if(checkoutRequest.getItems().size() == 0){
-            generateOrder(context, checkoutRequest, orderState, orderId);
         }
 
         context.storage().set(ORDER_STATE, orderState);

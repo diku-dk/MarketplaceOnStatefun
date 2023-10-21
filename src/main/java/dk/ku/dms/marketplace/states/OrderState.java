@@ -39,11 +39,15 @@ public final class OrderState {
     @JsonProperty("orderHistory")
     private final Map<Integer, List<OrderHistory>> orderHistory;
 
+    @JsonProperty("remainingAckMap")
+    private final Map<Integer, Integer> remainingAckMap;
+
     public OrderState() {
         this.checkouts = new HashMap<>();
         this.orders = new HashMap<>();
         this.orderItems = new HashMap<>();
         this.orderHistory = new HashMap<>();
+        this.remainingAckMap = new HashMap<>();
     }
 
     @JsonIgnore
@@ -77,4 +81,21 @@ public final class OrderState {
     	
     	history.add(orderHistory);
     }
+
+    public void setUpRemainingAcks(int orderId, int itemCount){
+        this.remainingAckMap.putIfAbsent(orderId, itemCount);
+    }
+
+    public void setDownRemainingAcks(int orderId){
+        this.remainingAckMap.remove(orderId);
+    }
+
+    public int decreaseRemainingItems(int orderId){
+        return this.remainingAckMap.computeIfPresent(orderId, (k,v)-> v-1);
+    }
+
+    public void cleanState(int orderId){
+        this.checkouts.remove(orderId);
+    }
+
 }

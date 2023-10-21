@@ -52,9 +52,9 @@ public final class Order {
     @JsonProperty("delivered_customer_date")
     private final LocalDateTime delivered_customer_date;
 
-    // dev
     @JsonProperty("countItems")
     private final int countItems;
+
     @JsonProperty("totalAmount")
     private final float totalAmount;
     @JsonProperty("totalFreight")
@@ -71,7 +71,8 @@ public final class Order {
     @JsonCreator
     public Order(int id, int customerId, Enums.OrderStatus status, String invoiceNumber, LocalDateTime purchaseTimestamp,
                  LocalDateTime created_at, LocalDateTime updated_at, LocalDateTime paymentDate, LocalDateTime delivered_carrier_date,
-                 LocalDateTime delivered_customer_date, int countItems, float totalAmount, float totalFreight, float totalIncentive, float totalInvoice, float totalItems, String data) {
+                 LocalDateTime delivered_customer_date, int countItems, float totalAmount, float totalFreight,
+                 float totalIncentive, float totalInvoice, float totalItems, String data) {
         this.id = id;
         this.customerId = customerId;
         this.status = status;
@@ -102,4 +103,5 @@ public final class Order {
     public String getInvoiceNumber() {
         return invoiceNumber;
     }
+
 }

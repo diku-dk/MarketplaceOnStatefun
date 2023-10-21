@@ -103,7 +103,7 @@ public class StockTest {
         context.storage().set(StockFn.STOCK_STATE, stockItem);
 
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "2");
-        AttemptReservationEvent event = new AttemptReservationEvent(1,item);
+        AttemptReservationEvent event = new AttemptReservationEvent(1,item,0);
 
         // Action
         StockFn function = new StockFn();
@@ -141,7 +141,7 @@ public class StockTest {
         context.storage().set(StockFn.STOCK_STATE, stockItem);
 
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "1");
-        AttemptReservationEvent event = new AttemptReservationEvent(1,item);
+        AttemptReservationEvent event = new AttemptReservationEvent(1,item,0);
 
         // Action
         StockFn function = new StockFn();
