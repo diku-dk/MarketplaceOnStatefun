@@ -1,19 +1,20 @@
 package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.entities.CustomerCheckout;
-import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.Package;
-import dk.ku.dms.marketplace.entities.Shipment;
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.entities.*;
 import dk.ku.dms.marketplace.functions.ShipmentFn;
+import dk.ku.dms.marketplace.functions.ShipmentProxyFn;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.seller.SellerMessages;
 import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
 import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
 import dk.ku.dms.marketplace.messages.shipment.UpdateShipment;
+import dk.ku.dms.marketplace.messages.shipment.UpdateShipmentAck;
+import dk.ku.dms.marketplace.states.ShipmentProxyState;
 import dk.ku.dms.marketplace.states.ShipmentState;
+import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.Address;
 import org.apache.flink.statefun.sdk.java.message.Message;
@@ -68,7 +69,6 @@ public class ShipmentTest {
         assert(mark.getStatus() == Enums.MarkStatus.SUCCESS);
         assert(mark.getTid().compareTo("1") == 0);
 
-
         List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
 
         assert (sentMessages.size() == 1);
@@ -107,7 +107,7 @@ public class ShipmentTest {
         ShipmentFn function = new ShipmentFn();
         Message message = MessageBuilder
                 .forAddress(self)
-                .withCustomType(ShipmentMessages.UPDATE_SHIPMENT_TYPE, new UpdateShipment(1))
+                .withCustomType(ShipmentMessages.UPDATE_SHIPMENT_TYPE, new UpdateShipment("1"))
                 .build();
 
         function.apply(context, message);
@@ -122,6 +122,62 @@ public class ShipmentTest {
 
         assert(context.storage().get(ShipmentFn.SHIPMENT_STATE).isPresent()
                 && context.storage().get(ShipmentFn.SHIPMENT_STATE).get().getShipments().get(1).getStatus() == Enums.ShipmentStatus.CONCLUDED);
+
+    }
+
+    @Test
+    public void testInitProxy() throws Throwable {
+
+        // Arrange
+        Address self = new Address(ShipmentProxyFn.TYPE, "1");
+
+        TestContext context = TestContext.forTarget(self);
+
+        // Action
+        ShipmentProxyFn function = new ShipmentProxyFn();
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(ShipmentMessages.UPDATE_SHIPMENT_TYPE, new UpdateShipment("1"))
+                .build();
+
+        function.apply(context, message);
+
+        List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
+
+        assert (sentMessages.size() == Constants.nShipmentPartitions);
+
+    }
+
+    @Test
+    public void testFinishDeliveryProxy() throws Throwable {
+
+        // Arrange
+        Address self = new Address(ShipmentProxyFn.TYPE, "1");
+
+        TestContext context = TestContext.forTarget(self);
+
+        ShipmentProxyState state = new ShipmentProxyState();
+        state.tidList.put("1", 1);
+
+        // set initial state
+        context.storage().set(ShipmentProxyFn.PROXY_STATE, state);
+
+        // Action
+        ShipmentProxyFn function = new ShipmentProxyFn();
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(ShipmentMessages.UPDATE_SHIPMENT_ACK_TYPE, new UpdateShipmentAck("1"))
+                .build();
+
+        function.apply(context, message);
+
+        // Assert Sent Messages
+        List<SideEffects.EgressSideEffect> sent = context.getSentEgressMessages();
+        assert(sent.size() > 0);
+
+        assert(context.storage().get(ShipmentProxyFn.PROXY_STATE).isPresent()
+                && !context.storage().get(ShipmentProxyFn.PROXY_STATE).get().tidList.containsKey("1"));
+
 
     }
 

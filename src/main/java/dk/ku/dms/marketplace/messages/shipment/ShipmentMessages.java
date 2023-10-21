@@ -21,4 +21,10 @@ public final class ShipmentMessages {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, UpdateShipment.class));
 
+    public static final Type<UpdateShipmentAck> UPDATE_SHIPMENT_ACK_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "UpdateShipmentAck"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, UpdateShipmentAck.class));
+
 }

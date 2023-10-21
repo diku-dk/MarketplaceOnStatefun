@@ -2,7 +2,6 @@ package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.CustomerCheckout;
-import dk.ku.dms.marketplace.entities.Order;
 import dk.ku.dms.marketplace.functions.CartFn;
 import dk.ku.dms.marketplace.functions.OrderFn;
 import dk.ku.dms.marketplace.functions.StockFn;
