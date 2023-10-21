@@ -17,7 +17,7 @@ public final class CustomerFn implements StatefulFunction {
     private static final Logger LOG = LoggerFactory.getLogger(CustomerFn.class);
 
     static final TypeName TYPE = TypeName.typeNameFromString("marketplace/customer");
-    static final ValueSpec<Customer> CUSTOMER_STATE = ValueSpec.named("customer").withCustomType(Customer.TYPE);
+    public static final ValueSpec<Customer> CUSTOMER_STATE = ValueSpec.named("customer").withCustomType(Customer.TYPE);
 
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
             .withValueSpec(CUSTOMER_STATE)

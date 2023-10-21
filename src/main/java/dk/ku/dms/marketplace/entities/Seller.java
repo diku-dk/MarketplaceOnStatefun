@@ -2,59 +2,67 @@ package dk.ku.dms.marketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
-
-public class Seller
+public final class Seller
 {
     @JsonProperty("id")
-    public int id;
+    public final int id;
+
     @JsonProperty("name")
-    public String name;
+    public final String name;
+
     @JsonProperty("company_name")
-    public String company_name;
+    public final String company_name;
+
     @JsonProperty("email")
-    public String email;
+    public final String email;
+
     @JsonProperty("phone")
-    public String phone;
+    public final String phone;
+
     @JsonProperty("mobile_phone")
-    public String mobile_phone;
+    public final String mobile_phone;
+
     @JsonProperty("cpf")
-    public String cpf;
+    public final String cpf;
     @JsonProperty("cnpj")
-    public String cnpj;
+    public final String cnpj;
+
     @JsonProperty("address")
-    public String address;
+    public final String address;
+
     @JsonProperty("complement")
-    public String complement;
+    public final String complement;
+
     @JsonProperty("city")
-    public String city;
+    public final String city;
+
     @JsonProperty("state")
-    public String state;
+    public final String state;
+
     @JsonProperty("zip_code")
-    public String zip_code;
+    public final String zip_code;
 
-//    这个字段应该删除了
-    @JsonProperty("order_count")
-    public int order_count;
-
-    public Seller() {
-        this.id = 0;
-        this.name = "";
-        this.order_count = 0;
-        this.company_name = "";
-        this.email = "";
-        this.phone = "";
-        this.mobile_phone = "";
-        this.cpf = "";
-        this.cnpj = "";
-        this.address = "";
-        this.complement = "";
-        this.city = "";
-        this.state = "";
-        this.zip_code = "";
+    public Seller(@JsonProperty("id") int id, @JsonProperty("name") String name, @JsonProperty("company_name") String company_name,
+                  @JsonProperty("email") String email, @JsonProperty("phone") String phone, @JsonProperty("mobile_phone") String mobile_phone,
+                  @JsonProperty("cpf") String cpf, @JsonProperty("cnpj") String cnpj, @JsonProperty("address") String address,
+                  @JsonProperty("complement") String complement, @JsonProperty("city") String city,
+                  @JsonProperty("state") String state, @JsonProperty("zip_code") String zip_code) {
+        this.id = id;
+        this.name = name;
+        this.company_name = company_name;
+        this.email = email;
+        this.phone = phone;
+        this.mobile_phone = mobile_phone;
+        this.cpf = cpf;
+        this.cnpj = cnpj;
+        this.address = address;
+        this.complement = complement;
+        this.city = city;
+        this.state = state;
+        this.zip_code = zip_code;
     }
 
-//    public long getId() {
+    //    public long getId() {
 //        return id;
 //    }
 //
@@ -84,7 +92,6 @@ public class Seller
         return "Seller{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-//                ", order_count=" + order_count +
                 ", company_name='" + company_name + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +

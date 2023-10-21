@@ -10,15 +10,9 @@ import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
 public final class ProductMessages {
 
-    public static final Type<Product> ADD_PRODUCT_TYPE =
+    public static final Type<Product> UPSERT_PRODUCT_TYPE =
             SimpleType.simpleImmutableTypeFrom(
-                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "addProduct"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, Product.class));
-
-    public static final Type<Product> UPDATE_PRODUCT_TYPE =
-            SimpleType.simpleImmutableTypeFrom(
-                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "updateProduct"),
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "UpsertProduct"),
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, Product.class));
 

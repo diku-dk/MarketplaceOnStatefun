@@ -20,7 +20,7 @@ import java.util.List;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
-public class ProductTest {
+public final class ProductTest {
 
     @Test
     public void testPriceUpdate() throws Throwable {
@@ -84,7 +84,7 @@ public class ProductTest {
         ProductFn function = new ProductFn();
         Message message = MessageBuilder
                 .forAddress(self)
-                .withCustomType(ProductMessages.UPDATE_PRODUCT_TYPE, newProduct)
+                .withCustomType(ProductMessages.UPSERT_PRODUCT_TYPE, newProduct)
                 .build();
 
         function.apply(context, message);

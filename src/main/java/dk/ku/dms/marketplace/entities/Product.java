@@ -10,7 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 import java.time.LocalDateTime;
 
-public class Product {
+public final class Product {
 
     @JsonProperty("product_id")
     private final int product_id;

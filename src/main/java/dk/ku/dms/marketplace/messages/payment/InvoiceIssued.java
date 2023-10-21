@@ -13,19 +13,24 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public final class InvoiceIssued {
+
     @JsonProperty("customerCheckout")
     private final CustomerCheckout customerCheckout;
 
     @JsonProperty("orderId")
     private final int orderId;
+
     @JsonProperty("invoiceNumber")
     private final String invoiceNumber;
+
     @JsonProperty("items")
     private final List<OrderItem> items;
+
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("issueDate")
     private final LocalDateTime issueDate;
+
     @JsonProperty("totalInvoice")
     private final float totalInvoice;
 
@@ -34,7 +39,7 @@ public final class InvoiceIssued {
 
     @JsonCreator
     public InvoiceIssued(@JsonProperty("customerCheckout") CustomerCheckout customerCheckout,
-                           @JsonProperty("orderID") int orderId,
+                           @JsonProperty("orderId") int orderId,
                            @JsonProperty("invoiceNumber") String invoiceNumber,
                            @JsonProperty("items") List<OrderItem> items,
                            @JsonProperty("totalInvoice") float totalInvoice,

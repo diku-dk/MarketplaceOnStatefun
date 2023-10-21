@@ -15,22 +15,37 @@ import java.time.LocalDateTime;
 
 
 public class OrderEntry {
-    @JsonProperty("seller_id") private int seller_id;
-    @JsonProperty("order_id") private int order_id;
-    @JsonProperty("package_id") private int package_id;
 
-    @JsonProperty("product_id") private int product_id;
-    @JsonProperty("product_name") private String product_name = "";
-    @JsonProperty("product_category") private String product_category = "";
+    @JsonProperty("seller_id")
+    private int seller_id;
+    @JsonProperty("order_id")
+    private int order_id;
 
-    @JsonProperty("unit_price") private float unit_price;
-    @JsonProperty("quantity") private int quantity;
+    @JsonProperty("package_id")
+    private int package_id;
 
-    @JsonProperty("totalItems") private float totalItems;
-    @JsonProperty("totalAmount") private float totalAmount;
-    @JsonProperty("totalInvoice") private float totalInvoice;
-    @JsonProperty("totalIncentive") private float totalIncentive = 0;
-    @JsonProperty("freight_value") private float freight_value;
+    @JsonProperty("product_id")
+    private int product_id;
+    @JsonProperty("product_name")
+    private String product_name = "";
+
+    @JsonProperty("product_category")
+    private String product_category = "";
+    @JsonProperty("unit_price")
+    private float unit_price;
+    @JsonProperty("quantity")
+    private int quantity;
+    @JsonProperty("totalItems")
+    private float totalItems;
+    @JsonProperty("totalAmount")
+    private float totalAmount;
+
+    @JsonProperty("totalInvoice")
+    private float totalInvoice;
+    @JsonProperty("totalIncentive")
+    private float totalIncentive = 0;
+    @JsonProperty("freight_value")
+    private float freight_value;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -42,11 +57,8 @@ public class OrderEntry {
     @JsonProperty("delivery_date")
     private LocalDateTime delivery_date;
 
-    // denormalized, thus redundant. to avoid join on details
-    // 这个字段的设计虽然在数据上是冗余的，（同样的信息在数据库中可能被存储了多次），这是为了避免在查询订单状态时需要进行联接查询（join），从而提高查询性能。这种设计策略被称为“反规范化”（denormalized）。
-    // 这个两个字段是冗余的，我们来想把他们放到单独的表，但是R建议不要这样，只是两个field，增加存储没事。
-    // 如果不这样，每次要查询状态再join，会慢且与Dapr的设计不符
     @JsonProperty("order_status") private Enums.OrderStatus order_status;
+
     @JsonProperty("delivery_status") private Enums.PackageStatus delivery_status;
 
     @JsonCreator

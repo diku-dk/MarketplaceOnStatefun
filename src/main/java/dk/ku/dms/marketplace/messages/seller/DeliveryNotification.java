@@ -13,37 +13,37 @@ import java.time.LocalDateTime;
 public final class DeliveryNotification {
 
     @JsonProperty("orderId")
-    private int orderId;
+    private final int orderId;
 
     @JsonProperty("customerId")
-    private int customerId;
+    private final int customerId;
 
     @JsonProperty("packageId")
-    private int packageId;
+    private final int packageId;
 
     @JsonProperty("sellerId")
-    private int sellerId;
+    private final int sellerId;
 
     @JsonProperty("productId")
-    private int productId;
+    private final int productId;
 
     @JsonProperty("productName")
-    private String productName;
+    private final String productName;
 
     @JsonProperty("Status")
-    private Enums.PackageStatus packageStatus;
+    private final Enums.PackageStatus packageStatus;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("eventDate")
-    private LocalDateTime deliveryDate;
+    private final LocalDateTime deliveryDate;
 
     @JsonCreator
     public DeliveryNotification(@JsonProperty("customerID") int customerID,
                                 @JsonProperty("orderId") int orderId,
                                 @JsonProperty("packageId") int packageId,
                                 @JsonProperty("sellerId") int sellerId,
-                                @JsonProperty("productID") int productId,
+                                @JsonProperty("productId") int productId,
                                 @JsonProperty("productName") String productName,
                                 @JsonProperty("Status") Enums.PackageStatus packageStatus,
                                 @JsonProperty("eventDate") LocalDateTime deliveryDate) {

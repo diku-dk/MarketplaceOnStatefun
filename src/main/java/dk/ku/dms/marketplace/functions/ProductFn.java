@@ -48,13 +48,8 @@ public final class ProductFn implements StatefulFunction {
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try{
-            // driver --> product (add product)
-            if (message.is(ProductMessages.ADD_PRODUCT_TYPE)) {
-                Product product = message.as(ProductMessages.ADD_PRODUCT_TYPE);
-                context.storage().set(PRODUCT_STATE, product);
-            }
             // driver --> product (update product)
-            else if (message.is(ProductMessages.UPDATE_PRODUCT_TYPE)) {
+            if (message.is(ProductMessages.UPSERT_PRODUCT_TYPE)) {
                 onUpdateProduct(context, message);
             }
             // driver --> product (update price)
@@ -69,20 +64,26 @@ public final class ProductFn implements StatefulFunction {
     }
 
     private void onUpdateProduct(Context context, Message message) {
-        Product product = message.as(ProductMessages.UPDATE_PRODUCT_TYPE);
-        context.storage().set(PRODUCT_STATE, product);
+        Product product = message.as(ProductMessages.UPSERT_PRODUCT_TYPE);
 
-        String id = product.getSellerId() + "/" + product.getProductId();
+        if(context.storage().get(PRODUCT_STATE).isPresent()) {
 
-        ProductUpdatedEvent productUpdated =
-                new ProductUpdatedEvent(product.getSellerId(), product.getProductId(), product.getVersion());
+            context.storage().set(PRODUCT_STATE, product);
 
-        Message updateProductMsg =
-                MessageBuilder.forAddress(StockFn.TYPE, id)
-                        .withCustomType(StockMessages.PRODUCT_UPDATED_TYPE, productUpdated)
-                        .build();
+            String id = product.getSellerId() + "/" + product.getProductId();
 
-        context.send(updateProductMsg);
+            ProductUpdatedEvent productUpdated =
+                    new ProductUpdatedEvent(product.getSellerId(), product.getProductId(), product.getVersion());
+
+            Message updateProductMsg =
+                    MessageBuilder.forAddress(StockFn.TYPE, id)
+                            .withCustomType(StockMessages.PRODUCT_UPDATED_TYPE, productUpdated)
+                            .build();
+
+            context.send(updateProductMsg);
+        } else {
+            context.storage().set(PRODUCT_STATE, product);
+        }
     }
 
     private void onUpdatePrice(Context context, Message message) {

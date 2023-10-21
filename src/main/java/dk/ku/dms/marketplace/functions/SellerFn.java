@@ -1,58 +1,48 @@
 package dk.ku.dms.marketplace.functions;
 
-import org.apache.flink.statefun.sdk.java.Context;
-import org.apache.flink.statefun.sdk.java.StatefulFunction;
-import org.apache.flink.statefun.sdk.java.TypeName;
+import dk.ku.dms.marketplace.entities.OrderEntry;
+import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.entities.Seller;
+import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
+import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
+import dk.ku.dms.marketplace.messages.seller.SellerMessages;
+import dk.ku.dms.marketplace.states.SellerState;
+import dk.ku.dms.marketplace.utils.Constants;
+import dk.ku.dms.marketplace.utils.Enums;
+import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.Message;
+import org.apache.flink.statefun.sdk.java.types.SimpleType;
+import org.apache.flink.statefun.sdk.java.types.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-//
-//import dk.ku.dms.marketplace.common.entity.*;
-//import dk.ku.dms.marketplace.common.utils.PostgreHelper;
-//import dk.ku.dms.marketplace.common.utils.Utils;
-//import dk.ku.dms.marketplace.constants.Enums;
-//import dk.ku.dms.marketplace.constants.Constants;
-//import dk.ku.dms.marketplace.types.MsgToOrderFn.PaymentNotification;
-//import dk.ku.dms.marketplace.types.MsgToOrderFn.ShipmentNotification;
-//import dk.ku.dms.marketplace.types.MsgToPaymentFn.InvoiceIssued;
-//import dk.ku.dms.marketplace.types.MsgToSeller.*;
-//import dk.ku.dms.marketplace.types.MsgToStock.IncreaseStock;
-//import dk.ku.dms.marketplace.types.State.SellerState;
-//import com.fasterxml.jackson.core.JsonProcessingException;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import org.apache.flink.statefun.sdk.java.*;
-//import org.apache.flink.statefun.sdk.java.message.Message;
-//import org.apache.flink.statefun.sdk.java.types.Types;
-//
-//import java.sql.Connection;
-//import java.sql.SQLException;
-//import java.sql.Statement;
-//import java.time.LocalDateTime;
-//import java.util.*;
-//import java.util.concurrent.CompletableFuture;
-//import java.util.logging.Logger;
-//
-//import static java.lang.Thread.sleep;
-//
+import static dk.ku.dms.marketplace.states.SellerState.SELLER_STATE_TYPE;
+import static dk.ku.dms.marketplace.utils.Constants.mapper;
+
 public final class SellerFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(SellerFn.class);
 
     static final TypeName TYPE = TypeName.typeNameFromString("marketplace/seller");
-//
-//    static final ValueSpec<SellerState> SELLERSTATE = ValueSpec.named("sellerState").withCustomType(SellerState.TYPE);
-//    //  Contains all the information needed to create a function instance
-//    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
-//            .withValueSpecs(SELLERSTATE)
-//            .withSupplier(SellerFn::new)
-//            .build();
-//
-//    private String getPartionText(String id) {
-//        return String.format(" [ SellerFn partitionId %s ] ", id);
-//    }
+
+    public static final Type<Seller> ENTITY_STATE_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "SellerEntityState"),
+                    mapper::writeValueAsBytes,
+                    bytes -> mapper.readValue(bytes, Seller.class));
+
+    static final ValueSpec<Seller> SELLER_ENTITY_STATE = ValueSpec.named("SellerEntityState").withCustomType(ENTITY_STATE_TYPE);
+    static final ValueSpec<SellerState> SELLER_STATE = ValueSpec.named("SellerState").withCustomType(SELLER_STATE_TYPE);
+
+    //  Contains all the information needed to create a function instance
+    public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
+            .withValueSpecs(SELLER_ENTITY_STATE, SELLER_STATE)
+            .withSupplier(SellerFn::new)
+            .build();
 //
 //    private static Connection conn;
 //
@@ -70,19 +60,15 @@ public final class SellerFn implements StatefulFunction {
 //
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
-//        try {
-//            // client ---> seller (init seller type)
-//            if (message.is(InitSeller.TYPE)) {
-//                onInitSeller(context, message);
-//            }
-//            // client ---> seller (get seller type)
-////            else if (message.is(GetSeller.TYPE)) {
-////                onGetSeller(context);
-////            }
-//            // order ---> seller
-//            else if (message.is(InvoiceIssued.TYPE)) {
-//                ProcessNewInvoice(context, message);
-//            }
+        try {
+            // client ---> seller (init seller type)
+            if (message.is(SellerMessages.SET_SELLER_TYPE)) {
+                onSetSeller(context, message);
+            }
+            // order ---> seller
+            else if (message.is(PaymentMessages.INVOICE_ISSUED_TYPE)) {
+                onInvoiceIssued(context, message);
+            }
 //            // client ---> seller (increase stock)
 //            else if (message.is(IncreaseStock.TYPE)) {
 //                onIncrStockAsyncBegin(context, message);
@@ -100,111 +86,64 @@ public final class SellerFn implements StatefulFunction {
 //            else if (message.is(DeliveryNotification.TYPE)) {
 //                ProcessDeliveryNotification(context, message);
 //            }
-//            // xxxxx ---> seller
-//            else if (message.is(Types.stringType())) {
-//                String result = message.as(Types.stringType());
-//                int sellerId = Integer.parseInt(context.self().id());
-//                String log = String.format(getPartionText(context.self().id())
-//                                + "sellerId: %s, result: %s\n",
-//                        sellerId, result);
-//                showLog(log);
-//            }
-//
-//        } catch (Exception e) {
-//            System.out.println("SellerFn apply error !!!!!!!!!!!!!!!");
-//            e.printStackTrace();
-//        }
-//
+        } catch (Exception e) {
+            System.out.println("SellerFn apply error !!!!!!!!!!!!!!!");
+            e.printStackTrace();
+        }
+
         return context.done();
     }
-//
-//    private void showLog(String log) {
-//        logger.info(log);
-////        System.out.println(log);
-//    }
-//
-//    private void printLog(String log) {
-//        System.out.println(log);
-//    }
-//
-//    private SellerState getSellerState(Context context) {
-//        return context.storage().get(SELLERSTATE).orElse(new SellerState());
-//    }
-//
-//    private void onInitSeller(Context context, Message message) {
-//        InitSeller initSeller = message.as(InitSeller.TYPE);
-//        Seller seller = initSeller.getSeller();
-//        SellerState sellerState = getSellerState(context);
-//        sellerState.setSeller(seller);
-//
-//        context.storage().set(SELLERSTATE, sellerState);
-//
-//        String log = String.format(getPartionText(context.self().id())
-//                + "init seller success, sellerId: %s\n", seller.getId());
-//        printLog(log);
-//    }
-//
-////    private void onGetSeller(Context context) {
-////        SellerState sellerState = getSellerState(context);
-////        Seller seller = sellerState.getSeller();
-////
-////        String log = String.format(getPartionText(context.self().id())
-////                + "get seller success\n"
-////                + seller.toString()
-////                + "\n"
-////        );
-////        showLog(log);
-////    }
-//
-//    private void onIncrStockAsyncBegin(Context context, Message message) {
-//        IncreaseStock increaseStock = message.as(IncreaseStock.TYPE);
-//        StockItem stockItem = increaseStock.getStockItem();
-//        int productId = stockItem.getProduct_id();
-////        int prodFnPartitionID = (int) (productId % Constants.nProductPartitions);
-//        int prodFnPartitionID = (int) (productId);
-////        sendGetProdMsgToProdFn(context, increaseStock, prodFnPartitionID);
-//        Utils.sendMessage(context,
-//                ProductFn.TYPE,
-//                String.valueOf(prodFnPartitionID),
-//                IncreaseStock.TYPE,
-//                increaseStock);
-//    }
-//
-//    private void ProcessNewInvoice(Context context, Message message) {
-//
-//        SellerState sellerState = getSellerState(context);
-//        InvoiceIssued invoiceIssued = message.as(InvoiceIssued.TYPE);
-//
-//        Invoice invoice = invoiceIssued.getInvoice();
-//        List<OrderItem> orderItems = invoice.getItems();
-//        int sellerId = sellerState.getSeller().getId();
-//        int orderId = invoice.getOrderID();
-//
-//        for (OrderItem orderItem : orderItems) {
-//            OrderEntry orderEntry = new OrderEntry(
-//                    orderId,
-//                    sellerId,
-//                    // packageI =
-//                    orderItem.getProductId(),
-//                    orderItem.getProductName(),
-//                    orderItem.getQuantity(),
-//                    orderItem.getTotalAmount(),
-//                    orderItem.getTotalPrice(),
-//                    // total_invoice =
-//                    // total_incentive =
-//                    orderItem.getFreightValue(),
-//                    // shipment_date
-//                    // delivery_date
-//                    orderItem.getUnitPrice(),
-//                    Enums.OrderStatus.INVOICED
-//                    // product_category = ? should come from product
-//            );
-//            sellerState.addOrderEntry(orderEntry);
-//        }
-//
-//        context.storage().set(SELLERSTATE, sellerState);
-//    }
-//
+
+    private SellerState getSellerState(Context context) {
+        return context.storage().get(SELLER_STATE).orElse(new SellerState());
+    }
+
+    private void onSetSeller(Context context, Message message) {
+        Seller seller = message.as(SellerMessages.SET_SELLER_TYPE);
+        context.storage().set(SELLER_ENTITY_STATE, seller);
+    }
+
+    private static String buildUniqueOrderIdentifier(InvoiceIssued invoiceIssued)
+    {
+        return new StringBuilder(invoiceIssued.getCustomerCheckout().getCustomerId()).append('-').append(invoiceIssued.getOrderId()).toString();
+    }
+
+    private void onInvoiceIssued(Context context, Message message) {
+
+        SellerState sellerState = getSellerState(context);
+        InvoiceIssued invoiceIssued = message.as(PaymentMessages.INVOICE_ISSUED_TYPE);
+
+        List<OrderItem> orderItems = invoiceIssued.getItems();
+        int sellerId = Integer.parseInt(context.self().id());
+
+        List<OrderEntry> list = new ArrayList<>(invoiceIssued.getItems().size());
+        sellerState.getOrderEntries().put( buildUniqueOrderIdentifier(invoiceIssued), list);
+
+        for (OrderItem orderItem : orderItems) {
+            OrderEntry orderEntry = new OrderEntry(
+                    invoiceIssued.getOrderId(),
+                    sellerId,
+                    // packageI =
+                    orderItem.getProductId(),
+                    orderItem.getProductName(),
+                    orderItem.getQuantity(),
+                    orderItem.getTotalAmount(),
+                    orderItem.getTotalPrice(),
+                    // total_invoice =
+                    // total_incentive =
+                    orderItem.getFreightValue(),
+                    // shipment_date
+                    // delivery_date
+                    orderItem.getUnitPrice(),
+                    Enums.OrderStatus.INVOICED
+                    // product_category = ? should come from product
+            );
+            list.add(orderEntry);
+        }
+
+        context.storage().set(SELLER_STATE, sellerState);
+    }
+
 //    private void onQueryDashboard(Context context, Message message) {
 //        SellerState sellerState = getSellerState(context);
 //
