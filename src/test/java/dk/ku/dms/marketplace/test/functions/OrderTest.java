@@ -2,12 +2,16 @@ package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.CustomerCheckout;
+import dk.ku.dms.marketplace.entities.Order;
+import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.functions.CartFn;
 import dk.ku.dms.marketplace.functions.OrderFn;
+import dk.ku.dms.marketplace.functions.ShipmentFn;
 import dk.ku.dms.marketplace.functions.StockFn;
 import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
@@ -156,6 +160,56 @@ public class OrderTest {
         assert(sentMessages.size() == 0);
 
         assert(context.storage().get(OrderFn.ORDER_STATE).isPresent() && !context.storage().get(OrderFn.ORDER_STATE).get().getCheckouts().containsKey(1));
+
+    }
+
+    @Test
+    public void testShipmentConcluded() throws Throwable {
+
+        Address orderAddress = new Address(OrderFn.TYPE, "1");
+        Address shipmentAddress = new Address(ShipmentFn.TYPE, "1");
+
+        TestContext context = TestContext.forTargetWithCaller(orderAddress, shipmentAddress);
+
+        OrderState orderState = new OrderState();
+        CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "0");
+
+        CustomerCheckout customerCheckout = new CustomerCheckout(1, "test","test","test","test","test",
+                "test","test","BOLETO", "test", "test","test", "test",
+                "test", 1, "1");
+
+        List<CartItem> items = new ArrayList<>( );
+        items.add(item);
+
+        CheckoutRequest checkoutRequest = new CheckoutRequest(LocalDateTime.now(), customerCheckout, items, "1");
+
+        orderState.getCheckouts().put(1, checkoutRequest);
+//        orderState.setUpRemainingAcks(1, 1);
+
+        orderState.getOrders().put(1, new Order(
+                1,1, Enums.OrderStatus.INVOICED, "1", LocalDateTime.now(), LocalDateTime.now(),
+                null, null, null, null, 1, 100, 0, 0, 100, 100, "")
+                );
+
+        List<OrderItem> orderItems = new ArrayList<>();
+//        orderItems.add(new OrderItem( 1, 1, 1, "test", 1, 100, 0, 1, 100, 100, LocalDateTime.now().plusDays(1) ));
+
+        orderState.getOrderItems().put(1, orderItems);
+
+        context.storage().set(OrderFn.ORDER_STATE, orderState);
+
+        ShipmentNotification notification = new ShipmentNotification(1, 1, Enums.ShipmentStatus.CONCLUDED, LocalDateTime.now());
+
+        // FIXME set voucher like in orleans
+
+        // Action
+        OrderFn function = new OrderFn();
+        Message message = MessageBuilder
+                .forAddress(orderAddress)
+                .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE, notification)
+                .build();
+
+        function.apply(context, message);
 
     }
 

@@ -1,7 +1,10 @@
 package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.entities.*;
+import dk.ku.dms.marketplace.entities.CustomerCheckout;
+import dk.ku.dms.marketplace.entities.OrderEntry;
+import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.entities.TransactionMark;
 import dk.ku.dms.marketplace.functions.SellerFn;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
@@ -41,7 +44,7 @@ public final class SellerTest {
                 "test","test","BOLETO", "test", "test","test", "test",
                 "test", 1, "1");
 
-        OrderItem orderItem = new OrderItem(1,1,1,"test",1,100,0,1,100,100, LocalDateTime.now().plusDays(1));
+        OrderItem orderItem = new OrderItem(1,1,1,"test",1,100,0,1,100,100, 0, LocalDateTime.now().plusDays(1));
         List<OrderItem> orderItemList = new ArrayList<>();
         orderItemList.add(orderItem);
 

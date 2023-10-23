@@ -1,5 +1,6 @@
 package dk.ku.dms.marketplace.states;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,15 +40,20 @@ public final class OrderState {
     @JsonProperty("orderHistory")
     private final Map<Integer, List<OrderHistory>> orderHistory;
 
-    @JsonProperty("remainingAckMap")
-    private final Map<Integer, Integer> remainingAckMap;
+    @JsonProperty("remainingAcksMap")
+    private final Map<Integer, Integer> remainingAcksMap;
 
+    @JsonProperty("inStockItems")
+    public final Map<Integer, List<Integer>> inStockItems;
+
+    @JsonCreator
     public OrderState() {
         this.checkouts = new HashMap<>();
         this.orders = new HashMap<>();
         this.orderItems = new HashMap<>();
         this.orderHistory = new HashMap<>();
-        this.remainingAckMap = new HashMap<>();
+        this.remainingAcksMap = new HashMap<>();
+        this.inStockItems = new HashMap<>();
     }
 
     @JsonIgnore
@@ -83,19 +89,23 @@ public final class OrderState {
     }
 
     public void setUpRemainingAcks(int orderId, int itemCount){
-        this.remainingAckMap.putIfAbsent(orderId, itemCount);
+        this.remainingAcksMap.putIfAbsent(orderId, itemCount);
     }
 
     public void setDownRemainingAcks(int orderId){
-        this.remainingAckMap.remove(orderId);
+        this.remainingAcksMap.remove(orderId);
     }
 
     public int decreaseRemainingItems(int orderId){
-        return this.remainingAckMap.computeIfPresent(orderId, (k,v)-> v-1);
+        return this.remainingAcksMap.computeIfPresent(orderId, (k, v)-> v-1);
     }
 
     public void cleanState(int orderId){
         this.checkouts.remove(orderId);
+        this.inStockItems.remove(orderId);
+        this.orderHistory.remove(orderId);
+        this.orders.remove(orderId);
+        this.orderItems.remove(orderId);
     }
 
 }

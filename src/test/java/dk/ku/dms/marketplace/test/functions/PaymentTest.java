@@ -28,7 +28,7 @@ public class PaymentTest {
                 "test","test","BOLETO", "test", "test","test", "test",
                 "test", 1, "1");
 
-        OrderItem orderItem = new OrderItem(1,1,1,"test",1,100,0,1,100,100,LocalDateTime.now().plusDays(1));
+        OrderItem orderItem = new OrderItem(1,1,1,"test",1,100,0,1,100,100, 0, LocalDateTime.now().plusDays(1));
         List<OrderItem> orderItemList = new ArrayList<>();
         orderItemList.add(orderItem);
 

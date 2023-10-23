@@ -8,6 +8,7 @@ import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
@@ -137,16 +138,13 @@ public final class OrderFn implements StatefulFunction {
         CheckoutRequest checkoutRequest = orderState.getCheckouts().get(orderId);
 
         if(resp.getStatus() == Enums.ItemStatus.IN_STOCK) {
-
-            CartItem item = checkoutRequest.getItems().get(resp.getIdx());
-
-            List<OrderItem> orderItems = orderState.getOrderItems().computeIfAbsent(orderId, k -> new ArrayList<>());
-
-            float totalPrice = item.getUnitPrice() * item.getQuantity();
-            OrderItem orderItem = new OrderItem(orderId, orderItems.size() + 1, item.getProductId(), item.getProductName(), item.getSellerId(), item.getUnitPrice(), item.getFreightValue(), item.getQuantity(), totalPrice,
-                    totalPrice - item.getVoucher(), LocalDateTime.now().plusDays(1));
-
-            orderItems.add(orderItem);
+            if(orderState.inStockItems.containsKey( orderId )){
+                orderState.inStockItems.get(orderId).add(resp.getIdx());
+            } else {
+                List<Integer> list = new ArrayList<>();
+                orderState.inStockItems.put(orderId, list);
+                list.add(resp.getIdx());
+            }
         }
 
         // all acks have been received
@@ -154,8 +152,8 @@ public final class OrderFn implements StatefulFunction {
             orderState.setDownRemainingAcks(orderId);
 
             // only proceed if at least one item has been reserved
-            if(orderState.getOrderItems().containsKey(orderId)) {
-                generateOrder(context, checkoutRequest, orderState, orderId);
+            if(orderState.inStockItems.containsKey(orderId)) {
+                this.generateOrder(context, checkoutRequest, orderState, orderId);
             } else {
                 // otherwise clean state for this order id
                 orderState.cleanState(orderId);
@@ -173,12 +171,16 @@ public final class OrderFn implements StatefulFunction {
     private void generateOrder(Context context, CheckoutRequest checkoutRequest, OrderState orderState, int orderId) {
 
     	LocalDateTime now = LocalDateTime.now();
-    	
-        List<OrderItem> itemsToCheckout = orderState.getOrderItems().get(orderId);
+
+        List<CartItem> itemsToCheckout = new ArrayList<>( orderState.inStockItems.get(orderId).size() );
+
+        for(Integer idx : orderState.inStockItems.get(orderId)){
+            itemsToCheckout.add(checkoutRequest.getItems().get(idx));
+        }
         
         float total_freight = 0;
         float total_amount = 0;
-        for (OrderItem item : itemsToCheckout) {
+        for (CartItem item : itemsToCheckout) {
         	total_freight += item.getFreightValue();
         	total_amount += item.getUnitPrice() * item.getQuantity();
         }
@@ -187,7 +189,7 @@ public final class OrderFn implements StatefulFunction {
         
         Map<Map.Entry<Integer, Integer>, Float> totalPerItem = new HashMap<>();
         float total_incentive = 0;
-        for (OrderItem item : itemsToCheckout) {
+        for (CartItem item : itemsToCheckout) {
         	float total_item = item.getUnitPrice() * item.getQuantity();
         	
         	if (total_item - item.getVoucher() > 0)
@@ -232,7 +234,7 @@ public final class OrderFn implements StatefulFunction {
         List<OrderItem> items = new ArrayList<>();
         
         int id = 1;
-        for (OrderItem item : itemsToCheckout)
+        for (CartItem item : itemsToCheckout)
         {
             items.add(new OrderItem
             (
@@ -246,6 +248,7 @@ public final class OrderFn implements StatefulFunction {
                 item.getQuantity(),
                 item.getUnitPrice() * item.getQuantity(),
                 totalPerItem.get(new AbstractMap.SimpleImmutableEntry<>(item.getSellerId(), item.getProductId())),
+                item.getVoucher(),
                 now.plusDays(3)
             ));
             id++;
@@ -296,41 +299,39 @@ public final class OrderFn implements StatefulFunction {
     }
 
     private void onShipmentNotification(Context context, Message message) { //throws SQLException, JsonProcessingException {
-//
-//        OrderState orderState = getOrderState(context);
-//        Map<Integer, Order> orders = orderState.getOrders();
-//        TreeMap<Integer, List<OrderHistory>> orderHistories = orderState.getOrderHistory();
-//
-//        ShipmentNotification shipmentNotification = message.as(ShipmentNotification.TYPE);
-//        int orderId = shipmentNotification.getOrderId();
-//
-//        if (!orders.containsKey(orderId)) {
-//            String str = new StringBuilder().append("Order ").append(orderId)
-//                    .append(" cannot be found to update to status ").toString();
-//            throw new RuntimeException(str);
-//        }
-//
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        Enums.OrderStatus status = Enums.OrderStatus.READY_FOR_SHIPMENT;
-//        if(shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.DELIVERY_IN_PROGRESS) {
-//            status = Enums.OrderStatus.IN_TRANSIT;
-//        } else if(shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.CONCLUDED) {
-//            status = Enums.OrderStatus.DELIVERED;
-//        }
-//
-//        // add history
-//        OrderHistory orderHistory = new OrderHistory(
-//                orderId,
-//                now,
-//                status);
-//        orderState.addOrderHistory(orderId, orderHistory);
-//
-//        orders.get(orderId).setUpdated_at(now);
-//        orders.get(orderId).setStatus(status);
-//
-//        if (status == Enums.OrderStatus.DELIVERED) {
-//            orders.get(orderId).setDelivered_customer_date(shipmentNotification.getEventDate());
+
+        OrderState orderState = getOrderState(context);
+        ShipmentNotification shipmentNotification = message.as(OrderMessages.SHIPMENT_NOTIFICATION_TYPE);
+        int orderId = shipmentNotification.getOrderId();
+        Order order = orderState.getOrders().getOrDefault(orderId, null);
+
+        if (order == null) {
+            String str = "Order " + orderId +
+                    " cannot be found to update to status ";
+            throw new RuntimeException(str);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Enums.OrderStatus status = Enums.OrderStatus.READY_FOR_SHIPMENT;
+        if(shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.DELIVERY_IN_PROGRESS) {
+            status = Enums.OrderStatus.IN_TRANSIT;
+        } else if(shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.CONCLUDED) {
+            status = Enums.OrderStatus.DELIVERED;
+        }
+
+        // add history
+        OrderHistory orderHistory = new OrderHistory(
+                orderId,
+                now,
+                status);
+        orderState.getOrderHistory().get(orderId).add(orderHistory);
+
+        order.setUpdatedAt(now);
+        order.setStatus(status);
+
+        if (status == Enums.OrderStatus.DELIVERED) {
+            order.setDeliveredCustomerDate(shipmentNotification.getEventDate());
 //
 //            Order order = orders.get(orderId);
 //            // log delivered entries and remove them from state
@@ -342,14 +343,13 @@ public final class OrderFn implements StatefulFunction {
 //            Statement st = conn.createStatement();
 //            String sql = String.format("INSERT INTO public.log (\"type\",\"key\",\"value\") VALUES ('%s', '%s', '%s')", type, id_, orderJson);
 //            st.execute(sql);
-//
-//            orders.remove(orderId);
-//        }
-//
-//        context.storage().set(ORDERSTATE, orderState);
-////        UpdateOrderStatus(context, orderId, status, eventTime);
+
+            orderState.cleanState(orderId);
+        }
+
+        context.storage().set(ORDER_STATE, orderState);
     }
-//
+
 //    private void UpdateOrderStatus(Context context, int orderId, Enums.OrderStatus status) {
 //        OrderState orderState = getOrderState(context);
 //        Map<Integer, Order> orders = orderState.getOrders();

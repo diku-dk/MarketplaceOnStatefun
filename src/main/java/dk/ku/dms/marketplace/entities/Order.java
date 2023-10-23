@@ -17,7 +17,7 @@ public final class Order {
     @JsonProperty("customerId")
     private final int customerId;
     @JsonProperty("status")
-    private final Enums.OrderStatus status;
+    private Enums.OrderStatus status;
 
     @JsonProperty("invoiceNumber")
     private final String invoiceNumber;
@@ -35,7 +35,7 @@ public final class Order {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("updated_at")
-    private final LocalDateTime updated_at;
+    private LocalDateTime updated_at;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -50,7 +50,7 @@ public final class Order {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonProperty("delivered_customer_date")
-    private final LocalDateTime delivered_customer_date;
+    private LocalDateTime delivered_customer_date;
 
     @JsonProperty("countItems")
     private final int countItems;
@@ -104,4 +104,15 @@ public final class Order {
         return invoiceNumber;
     }
 
+    public void setStatus(Enums.OrderStatus status) {
+        this.status = status;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updated_at = updatedAt;
+    }
+
+    public void setDeliveredCustomerDate(LocalDateTime eventDate) {
+        this.delivered_customer_date = eventDate;
+    }
 }

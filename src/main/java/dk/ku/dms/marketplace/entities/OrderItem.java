@@ -10,31 +10,44 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import java.time.LocalDateTime;
 
 public final class OrderItem {
+
     @JsonProperty("orderId")
     private final int orderId;
+
     @JsonProperty("orderItemId")
     private final int orderItemId;
+
     @JsonProperty("productId")
     private final int productId;
+
     @JsonProperty("productName")
     private final String productName;
+
     @JsonProperty("sellerId")
     private final int sellerId;
+
     @JsonProperty("unitPrice")
     private final float unitPrice;
+
     @JsonProperty("freightValue")
     private final float freightValue;
+
     @JsonProperty("quantity")
     private final int quantity;
+
     @JsonProperty("totalPrice")
     private final float totalPrice; // without freight
+
     @JsonProperty("totalAmount")
     private final float totalAmount;
+
     @JsonProperty("voucher")
     private float voucher;
+
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonProperty("shippingLimitDate") private final LocalDateTime shippingLimitDate;
+    @JsonProperty("shippingLimitDate")
+    private final LocalDateTime shippingLimitDate;
 
     @JsonCreator
     public OrderItem(@JsonProperty("orderId") int orderId,
@@ -47,6 +60,7 @@ public final class OrderItem {
                      @JsonProperty("quantity") int quantity,
                      @JsonProperty("totalPrice") float totalPrice,
                      @JsonProperty("totalAmount") float totalAmount,
+                     @JsonProperty("voucher") float voucher,
                      @JsonProperty("shippingLimitDate") LocalDateTime shippingLimitDate) {
         this.orderId = orderId;
         this.orderItemId = orderItemId;
@@ -59,6 +73,7 @@ public final class OrderItem {
         this.totalPrice = totalPrice;
         this.totalAmount = totalAmount;
         this.shippingLimitDate = shippingLimitDate;
+        this.voucher = voucher;
     }
 
     public float getFreightValue() {
