@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +38,7 @@ public final class SellerFn implements StatefulFunction {
 
     private static final Logger LOG = LoggerFactory.getLogger(SellerFn.class);
 
-    static final TypeName TYPE = TypeName.typeNameFromString("marketplace/seller");
+    public static final TypeName TYPE = TypeName.typeNameFromString("marketplace/seller");
 
     public static final Type<Seller> ENTITY_STATE_TYPE =
             SimpleType.simpleImmutableTypeFrom(
@@ -46,18 +47,18 @@ public final class SellerFn implements StatefulFunction {
                     bytes -> mapper.readValue(bytes, Seller.class));
 
     static final ValueSpec<Seller> SELLER_ENTITY_STATE = ValueSpec.named("SellerEntityState").withCustomType(ENTITY_STATE_TYPE);
-    static final ValueSpec<SellerState> SELLER_STATE = ValueSpec.named("SellerState").withCustomType(SELLER_STATE_TYPE);
+    public static final ValueSpec<SellerState> SELLER_STATE = ValueSpec.named("SellerState").withCustomType(SELLER_STATE_TYPE);
 
     //  Contains all the information needed to create a function instance
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
             .withValueSpecs(SELLER_ENTITY_STATE, SELLER_STATE)
             .withSupplier(SellerFn::new)
             .build();
-//
-//    private static Connection conn;
-//
     private final ObjectMapper objectMapper = new ObjectMapper();
-//
+
+//    private static Connection conn;
+
+
 //    static {
 //        try {
 //            conn = PostgreHelper.getConnection();
@@ -67,7 +68,7 @@ public final class SellerFn implements StatefulFunction {
 //            e.printStackTrace();
 //        }
 //    }
-//
+
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
@@ -93,8 +94,7 @@ public final class SellerFn implements StatefulFunction {
                 onDeliveryNotification(context, message);
             }
         } catch (Exception e) {
-            System.out.println("SellerFn apply error !!!!!!!!!!!!!!!");
-            e.printStackTrace();
+            LOG.error("SellerFn apply error !!!!!!!!!!!!!!!");
         }
 
         return context.done();
@@ -189,10 +189,10 @@ public final class SellerFn implements StatefulFunction {
         );
 
         // must also account for the publishing of the result somewhere... not just the transaction mark payload
-        String res = objectMapper.writeValueAsString(sellerDashboard);
+        byte[] res = objectMapper.writeValueAsBytes(sellerDashboard);
 
         TransactionMark mark = new TransactionMark(tid,
-                Enums.TransactionType.QUERY_DASHBOARD, sellerId, Enums.MarkStatus.SUCCESS, res);// "seller");
+                Enums.TransactionType.QUERY_DASHBOARD, sellerId, Enums.MarkStatus.SUCCESS, Arrays.toString(res));// "seller");
 
         final EgressMessage egressMessage =
                 EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)

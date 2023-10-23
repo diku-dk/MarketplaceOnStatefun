@@ -49,4 +49,17 @@ public final class OrderSellerView {
           this.total_items = total_items;
      }
 
+    @Override
+    public String toString() {
+        return "OrderSellerView{" +
+                " \"sellerId\" : " + sellerId +
+                ", \"count_orders\" : " + count_orders +
+                ", \"count_items\" : " + count_items +
+                ", \"total_amount\" : " + total_amount +
+                ", \"total_freight\" : " + total_freight +
+                ", \"total_incentive\" : " + total_incentive +
+                ", \"total_invoice\" : " + total_invoice +
+                ", \"total_items\" : " + total_items +
+                '}';
+    }
 }

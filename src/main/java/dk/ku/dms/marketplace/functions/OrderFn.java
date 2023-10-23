@@ -77,10 +77,6 @@ public final class OrderFn implements StatefulFunction {
             else if (message.is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE)) {
                 onShipmentNotification(context, message);
             }
-//            else if (message.is(Cleanup.TYPE))
-//            {
-//                onCleanup(context);
-//            }
         } catch (Exception e) {
             LOG.error("OrderFn error: !!!!!!!!!!!!" + e.getMessage());
         }
