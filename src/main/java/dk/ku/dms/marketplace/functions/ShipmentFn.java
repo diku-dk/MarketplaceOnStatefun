@@ -115,7 +115,7 @@ public final class ShipmentFn implements StatefulFunction {
                     orderItem.getFreightValue(),
                     orderItem.getProductName(),
                     now,
-                    Enums.PackageStatus.SHIPPED
+                    Enums.PackageStatus.shipped
             );
             packages.add(pkg);
             packageId++;
@@ -254,7 +254,7 @@ public final class ShipmentFn implements StatefulFunction {
         long countDelivered = shipmentState.getTotalDeliveredPackagesForShipment(shipmentId);
 
         for (Package p : sellerPackages) {
-            p.setPackageStatus(Enums.PackageStatus.DELIVERED);
+            p.setPackageStatus(Enums.PackageStatus.delivered);
             p.setDeliveredTime(now);
 
             DeliveryNotification deliveryNotification = new DeliveryNotification(
@@ -264,7 +264,7 @@ public final class ShipmentFn implements StatefulFunction {
                     p.getSellerId(),
                     p.getProductId(),
                     p.getProductName(),
-                    Enums.PackageStatus.DELIVERED,
+                    Enums.PackageStatus.delivered,
                     now
             );
 

@@ -8,7 +8,7 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
-public class StockMessages {
+public final class StockMessages {
 
     public static final Type<AttemptReservationEvent> ATTEMPT_RESERVATION_TYPE =
             SimpleType.simpleImmutableTypeFrom(

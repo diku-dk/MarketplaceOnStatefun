@@ -7,7 +7,7 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
-public class PaymentMessages {
+public final class PaymentMessages {
 
     public static final Type<InvoiceIssued> INVOICE_ISSUED_TYPE =
             SimpleType.simpleImmutableTypeFrom(

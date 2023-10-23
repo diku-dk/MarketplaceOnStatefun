@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dk.ku.dms.marketplace.utils.Enums;
 
-public class TransactionMark {
+public final class TransactionMark {
 
     @JsonProperty("tid")
     private String tid;

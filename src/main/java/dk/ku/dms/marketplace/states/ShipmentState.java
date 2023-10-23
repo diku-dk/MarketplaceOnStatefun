@@ -50,7 +50,7 @@ public final class ShipmentState {
     public Map<Integer, Integer> getOldestOpenShipmentPerSeller() {
         return this.packages.values().stream()
                 .flatMap(List::stream)
-                .filter(p -> p.getPackageStatus().equals(Enums.PackageStatus.SHIPPED))
+                .filter(p -> p.getPackageStatus().equals(Enums.PackageStatus.shipped))
                 .collect(Collectors.groupingBy(Package::getSellerId,
                         Collectors.minBy(Comparator.comparingInt(Package::getShipmentId))))
                 .entrySet().stream()
@@ -63,14 +63,14 @@ public final class ShipmentState {
     public List<Package> getShippedPackagesByShipmentIdAndSellerId(int sellerId, int shipmentId) {
         return packages.get(shipmentId).stream()
                 .filter(p -> p.getSellerId() == sellerId
-                        && p.getPackageStatus().equals(Enums.PackageStatus.SHIPPED))
+                        && p.getPackageStatus().equals(Enums.PackageStatus.shipped))
                 .collect(Collectors.toList());
     }
 
     @JsonIgnore
     public long getTotalDeliveredPackagesForShipment(int shipmentId) {
         return packages.get(shipmentId).stream()
-                .filter(p -> p.getPackageStatus() == Enums.PackageStatus.DELIVERED)
+                .filter(p -> p.getPackageStatus() == Enums.PackageStatus.delivered)
                 .count();
     }
 }

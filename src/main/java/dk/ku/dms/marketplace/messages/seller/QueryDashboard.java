@@ -6,10 +6,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class QueryDashboard {
 
     @JsonProperty("tid")
-    private final int tid;
+    private final String tid;
 
     @JsonCreator
-    public QueryDashboard(@JsonProperty("tid") int tid) {
+    public QueryDashboard(@JsonProperty("tid") String tid) {
         this.tid = tid;
     }
+
+    public String getTid() {
+        return tid;
+    }
+
 }

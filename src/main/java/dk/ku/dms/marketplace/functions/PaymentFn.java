@@ -130,8 +130,8 @@ public final class PaymentFn implements StatefulFunction {
 
         List<Integer> sellerIds = invoiceIssued.getItems().stream().map(OrderItem::getSellerId).distinct().collect(Collectors.toList());
 
-        PaymentNotification paymentNotification = new PaymentNotification(orderId, Enums.PaymentStatus.succeeded);
-        // TODO seller dashboard implemented via code or data stream? if via code, need to send all order items
+        PaymentNotification paymentNotification = new PaymentNotification(orderId, Integer.parseInt(context.self().id()), Enums.PaymentStatus.succeeded);
+
         for (int sellerId : sellerIds) {
             Message paymentSellerMsg =
                     MessageBuilder.forAddress(SellerFn.TYPE, String.valueOf(sellerId))

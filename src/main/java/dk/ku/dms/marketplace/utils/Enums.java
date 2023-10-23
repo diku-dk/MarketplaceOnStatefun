@@ -42,9 +42,17 @@ public class Enums {
 
     public enum PackageStatus
     {
-        CREATED,
-        SHIPPED,
-        DELIVERED
+        created,
+        ready_to_ship,
+        canceled,
+        lost,
+        stolen,
+        seized_for_inspection,
+        returning_to_sender,
+        returned_to_sender,
+        awaiting_pickup_by_receiver,
+        shipped,
+        delivered
     }
 
     public enum CustomerNotificationType

@@ -30,12 +30,12 @@ public final class DeliveryNotification {
     @JsonProperty("productName")
     private final String productName;
 
-    @JsonProperty("Status")
+    @JsonProperty("status")
     private final Enums.PackageStatus packageStatus;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonProperty("eventDate")
+    @JsonProperty("deliveryDate")
     private final LocalDateTime deliveryDate;
 
     @JsonCreator
@@ -45,8 +45,8 @@ public final class DeliveryNotification {
                                 @JsonProperty("sellerId") int sellerId,
                                 @JsonProperty("productId") int productId,
                                 @JsonProperty("productName") String productName,
-                                @JsonProperty("Status") Enums.PackageStatus packageStatus,
-                                @JsonProperty("eventDate") LocalDateTime deliveryDate) {
+                                @JsonProperty("status") Enums.PackageStatus packageStatus,
+                                @JsonProperty("deliveryDate") LocalDateTime deliveryDate) {
         this.orderId = orderId;
         this.customerId = customerID;
         this.sellerId = sellerId;
@@ -55,6 +55,30 @@ public final class DeliveryNotification {
         this.productName = productName;
         this.packageStatus = packageStatus;
         this.deliveryDate = deliveryDate;
+    }
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public int getCustomerId() {
+        return customerId;
+    }
+
+    public int getPackageId() {
+        return packageId;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public Enums.PackageStatus getPackageStatus() {
+        return packageStatus;
+    }
+
+    public LocalDateTime getDeliveryDate() {
+        return deliveryDate;
     }
 }
 

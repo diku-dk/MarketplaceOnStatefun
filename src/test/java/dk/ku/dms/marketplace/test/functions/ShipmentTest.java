@@ -93,7 +93,7 @@ public class ShipmentTest {
         Shipment shipment = new Shipment(1, 1, 1, 1, 1, LocalDateTime.now(),
                 Enums.ShipmentStatus.APPROVED, "test", "test", "test", "test", "test", "test" );
 
-        Package package_ = new Package(1,1,1,1,1,1,1,"test", LocalDateTime.now(), Enums.PackageStatus.SHIPPED);
+        Package package_ = new Package(1,1,1,1,1,1,1,"test", LocalDateTime.now(), Enums.PackageStatus.shipped);
         List<Package> packages = new ArrayList<>();
         packages.add(package_);
 

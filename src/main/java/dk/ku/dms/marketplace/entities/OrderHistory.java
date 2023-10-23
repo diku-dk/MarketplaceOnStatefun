@@ -10,13 +10,18 @@ import dk.ku.dms.marketplace.utils.Enums;
 
 import java.time.LocalDateTime;
 
-public class OrderHistory {
-    @JsonProperty("orderId") private int orderId;
-    @JsonProperty("status") private Enums.OrderStatus status;
+public final class OrderHistory {
+
+    @JsonProperty("orderId")
+    private final int orderId;
+
+    @JsonProperty("status")
+    private final Enums.OrderStatus status;
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonProperty("created_at") private LocalDateTime created_at;
+    @JsonProperty("created_at")
+    private final LocalDateTime created_at;
 
     @JsonCreator
     public OrderHistory(@JsonProperty("orderId") int orderId,

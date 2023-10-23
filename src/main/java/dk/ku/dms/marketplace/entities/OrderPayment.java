@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dk.ku.dms.marketplace.utils.Enums;
 
-public class OrderPayment {
+public final class OrderPayment {
     @JsonProperty("orderId")
     private final int orderId;
 

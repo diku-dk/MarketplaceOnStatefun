@@ -3,22 +3,22 @@ package dk.ku.dms.marketplace.entities;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
+public final class SellerDashboard {
 
-public class SellerDashboard {
-    @JsonProperty("sellerView") private OrderSellerView sellerView = new OrderSellerView();
-    @JsonProperty("orderEntries") private Set<OrderEntry> orderEntries  = new HashSet<>();
+    @JsonProperty("sellerView")
+    private final OrderSellerView sellerView;
 
-    public SellerDashboard() {
-    }
+    @JsonProperty("orderEntries")
+    private final List<OrderEntry> orderEntries;
 
     @JsonCreator
     public SellerDashboard(
             @JsonProperty("sellerView") OrderSellerView sellerView,
-            @JsonProperty("orderEntries") Set<OrderEntry> orderEntries) {
+            @JsonProperty("orderEntries") List<OrderEntry> orderEntries) {
         this.sellerView = sellerView;
         this.orderEntries = orderEntries;
     }
+
 }

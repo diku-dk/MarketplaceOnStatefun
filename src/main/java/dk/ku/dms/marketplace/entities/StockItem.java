@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
-public class StockItem {
+public final class StockItem {
 
     public static final Type<StockItem> TYPE =
             SimpleType.simpleImmutableTypeFrom(

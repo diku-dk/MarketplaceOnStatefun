@@ -9,7 +9,7 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 
 import static dk.ku.dms.marketplace.utils.Constants.mapper;
 
-public class Customer {
+public final class Customer {
 
     public static final Type<Customer> TYPE =
             SimpleType.simpleImmutableTypeFrom(
@@ -17,25 +17,59 @@ public class Customer {
                     mapper::writeValueAsBytes,
                     bytes -> mapper.readValue(bytes, Customer.class));
 
-    @JsonProperty("id") private int customerId;
-    @JsonProperty("first_name") private String firstName;
-    @JsonProperty("last_name") private String lastName;
-    @JsonProperty("address") private String address;
-    @JsonProperty("complement") private String complement;
-    @JsonProperty("birth_date") private String birth_date;
-    @JsonProperty("zip_code") private String zipCode;
-    @JsonProperty("city") private String city;
-    @JsonProperty("state") private String state;
-    @JsonProperty("card_number") private String cardNumber;
-    @JsonProperty("card_security_number") private String cardSecurityNumber;
-    @JsonProperty("card_expiration") private String cardExpiration;
-    @JsonProperty("card_holder_name") private String cardHolderName;
-    @JsonProperty("card_type") private String cardType;
-    @JsonProperty("data") private String data;
+    @JsonProperty("id")
+    private int customerId;
 
-    @JsonProperty("success_payment_count") private int successPaymentCount;
-    @JsonProperty("failed_payment_count") private int failedPaymentCount;
-    @JsonProperty("delivery_count") private int deliveryCount;
+    @JsonProperty("first_name")
+    private String firstName;
+
+    @JsonProperty("last_name")
+    private String lastName;
+
+    @JsonProperty("address")
+    private String address;
+
+    @JsonProperty("complement")
+    private String complement;
+
+    @JsonProperty("birth_date")
+    private String birth_date;
+
+    @JsonProperty("zip_code")
+    private String zipCode;
+
+    @JsonProperty("city")
+    private String city;
+
+    @JsonProperty("state")
+    private String state;
+
+    @JsonProperty("card_number")
+    private String cardNumber;
+
+    @JsonProperty("card_security_number")
+    private String cardSecurityNumber;
+
+    @JsonProperty("card_expiration")
+    private String cardExpiration;
+
+    @JsonProperty("card_holder_name")
+    private String cardHolderName;
+
+    @JsonProperty("card_type")
+    private String cardType;
+
+    @JsonProperty("data")
+    private String data;
+
+    @JsonProperty("success_payment_count")
+    private int successPaymentCount;
+
+    @JsonProperty("failed_payment_count")
+    private int failedPaymentCount;
+
+    @JsonProperty("delivery_count")
+    private int deliveryCount;
 
     @JsonCreator
     public Customer(
@@ -81,9 +115,8 @@ public class Customer {
     }
 
     @JsonCreator
-    public Customer() {
+    public Customer() { }
 
-    }
     public void incrementSuccessPaymentCount() {
         this.successPaymentCount++;
     }
