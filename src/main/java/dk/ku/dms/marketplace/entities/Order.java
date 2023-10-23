@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -114,5 +115,10 @@ public final class Order {
 
     public void setDeliveredCustomerDate(LocalDateTime eventDate) {
         this.delivered_customer_date = eventDate;
+    }
+
+    @JsonIgnore
+    public Enums.OrderStatus getStatus() {
+        return status;
     }
 }

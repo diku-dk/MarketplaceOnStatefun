@@ -5,7 +5,11 @@ import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderEntry;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.functions.OrderFn;
 import dk.ku.dms.marketplace.functions.SellerFn;
+import dk.ku.dms.marketplace.functions.ShipmentFn;
+import dk.ku.dms.marketplace.messages.order.OrderMessages;
+import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
 import dk.ku.dms.marketplace.messages.seller.QueryDashboard;
@@ -32,8 +36,9 @@ public final class SellerTest {
 
         // Arrange
         Address self = new Address(SellerFn.TYPE, "1");
+        Address orderAddress = new Address(OrderFn.TYPE, "1");
 
-        TestContext context = TestContext.forTarget(self);
+        TestContext context = TestContext.forTargetWithCaller(self, orderAddress);
 
         SellerState sellerState = new SellerState();
 
@@ -113,6 +118,41 @@ public final class SellerTest {
 
     @Test
     public void testShipmentConcluded() throws Throwable {
+
+        // Arrange
+        Address self = new Address(SellerFn.TYPE, "1");
+        Address shipmentAddress = new Address(ShipmentFn.TYPE, "1");
+
+        TestContext context = TestContext.forTargetWithCaller(self, shipmentAddress);
+
+        SellerState sellerState = new SellerState();
+        List<OrderEntry> entries = new ArrayList<>();
+
+        entries.add(new OrderEntry(1, 1, 1,
+                "test", 1, 100, 100, 100, 0, 0, 100, Enums.OrderStatus.INVOICED));
+        entries.add(new OrderEntry(1, 1, 2,
+                "test2", 1, 100, 100, 100, 0, 0, 100, Enums.OrderStatus.INVOICED));
+
+        sellerState.getOrderEntries().put("1-1", entries);
+
+        // set initial state
+        context.storage().set(SellerFn.SELLER_STATE, sellerState);
+
+        ShipmentNotification notification = new ShipmentNotification(1, 1, Enums.ShipmentStatus.CONCLUDED, LocalDateTime.now());
+
+        // Action
+        SellerFn function = new SellerFn();
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE, notification)
+                .build();
+        function.apply(context, message);
+
+        // Assert Sent Messages
+        List<SideEffects.EgressSideEffect> sent = context.getSentEgressMessages();
+        assert(sent.size() == 0);
+
+        assert(context.storage().get(SellerFn.SELLER_STATE).isPresent() && context.storage().get(SellerFn.SELLER_STATE).get().getOrderEntries().size() == 0);
 
     }
 

@@ -5,12 +5,12 @@ import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.Order;
 import dk.ku.dms.marketplace.entities.OrderHistory;
 import dk.ku.dms.marketplace.entities.OrderItem;
-import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
-import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
-import dk.ku.dms.marketplace.messages.order.OrderMessages;
-import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
+import dk.ku.dms.marketplace.messages.customer.CustomerMessages;
+import dk.ku.dms.marketplace.messages.order.*;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
+import dk.ku.dms.marketplace.messages.seller.SellerMessages;
+import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.states.OrderState;
@@ -70,11 +70,10 @@ public final class OrderFn implements StatefulFunction {
             else if (message.is(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE)) {
                 onReserveAttemptResponse(context, message);
             }
-//            // xxxx ---> order (update order status)
-//            else if (message.is(PaymentNotification.TYPE)) {
-//                PaymentNotification info = message.as(PaymentNotification.TYPE);
-//                UpdateOrderStatus(context, info.getOrderId(), info.getOrderStatus());
-//            }
+            // payment ---> order (update order status)
+            else if (message.is(OrderMessages.PAYMENT_NOTIFICATION_TYPE)) {
+                onPaymentNotification(context, message);
+            }
             else if (message.is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE)) {
                 onShipmentNotification(context, message);
             }
@@ -87,7 +86,7 @@ public final class OrderFn implements StatefulFunction {
     private OrderState getOrderState(Context context) {
         return context.storage().get(ORDER_STATE).orElse(new OrderState());
     }
-//
+
     private int generateNextOrderId(Context context) {
         int nextId = context.storage().get(NEXT_ORDER_ID_STATE).orElse(0) + 1;
         context.storage().set(NEXT_ORDER_ID_STATE, nextId);
@@ -332,7 +331,7 @@ public final class OrderFn implements StatefulFunction {
 
         if (status == Enums.OrderStatus.DELIVERED) {
             order.setDeliveredCustomerDate(shipmentNotification.getEventDate());
-//
+
 //            Order order = orders.get(orderId);
 //            // log delivered entries and remove them from state
 //
@@ -350,43 +349,21 @@ public final class OrderFn implements StatefulFunction {
         context.storage().set(ORDER_STATE, orderState);
     }
 
-//    private void UpdateOrderStatus(Context context, int orderId, Enums.OrderStatus status) {
-//        OrderState orderState = getOrderState(context);
-//        Map<Integer, Order> orders = orderState.getOrders();
-//        TreeMap<Integer, List<OrderHistory>> orderHistories = orderState.getOrderHistory();
-//
-//        if (!orders.containsKey(orderId)) {
-//            String str = new StringBuilder().append("Order ").append(orderId)
-//                    .append(" cannot be found to update to status ").append(status.toString()).toString();
-//            throw new RuntimeException(str);
-//        }
-//
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        orders.get(orderId).setUpdated_at(now);
-//        Enums.OrderStatus oldStatus = orders.get(orderId).getStatus();
-//        orders.get(orderId).setStatus(status);
-//
-//        switch (status) {
-//            case SHIPPED:
-//                orders.get(orderId).setDelivered_carrier_date(now);
-//                break;
-//            case DELIVERED:
-//                orders.get(orderId).setDelivered_customer_date(now);
-//                break;
-////            case CANCLED:
-//            case PAYMENT_FAILED:
-//            case PAYMENT_PROCESSED:
-//                orders.get(orderId).setPaymentDate(now);
-//                break;
-//            default:
-//                break;
-//        }
-//
-//        context.storage().set(ORDERSTATE, orderState);
-//
-//        String log = getPartionText(context.self().id())
-//                + "update order status, orderId: " + orderId + ", oldStatus: " + oldStatus + ", newStatus: " + status + "\n";
-////        showLog(log);
-//    }
+    private void onPaymentNotification(Context context, Message message) {
+        LocalDateTime now = LocalDateTime.now();
+        OrderState orderState = getOrderState(context);
+        PaymentNotification paymentNotification = message.as(OrderMessages.PAYMENT_NOTIFICATION_TYPE);
+        int orderId = paymentNotification.getOrderId();
+        // add history
+        OrderHistory orderHistory = new OrderHistory(
+                orderId,
+                now,
+                OrderStatus.PAYMENT_PROCESSED);
+        orderState.getOrderHistory().get(orderId).add(orderHistory);
+        Order order = orderState.getOrders().get(orderId);
+        order.setStatus(OrderStatus.PAYMENT_PROCESSED);
+        order.setUpdatedAt(now);
+        context.storage().set(ORDER_STATE, orderState);
+    }
+
 }
