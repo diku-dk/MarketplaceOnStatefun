@@ -1,9 +1,11 @@
 package dk.ku.dms.marketplace.test.functions;
 
+import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.functions.CartFn;
 import dk.ku.dms.marketplace.messages.cart.CartMessages;
+import dk.ku.dms.marketplace.messages.cart.GetCart;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.states.CartState;
@@ -16,14 +18,15 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class CustomerTest {
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
+
+public class CartTest {
 
     @Test
     public void testSimpleAddItemToCart() throws Throwable {
 
         // Arrange
         Address self = new Address(CartFn.TYPE, "1");
-        // Address caller = new Address(..., ...);
 
         TestContext context = TestContext.forTarget(self);
 
@@ -90,6 +93,46 @@ public class CustomerTest {
 
         // Assert State
         assert(context.storage().get(CartFn.CART_STATE).isPresent() && context.storage().get(CartFn.CART_STATE).get().getItems().size() == 0 && context.storage().get(CartFn.CART_STATE).get().getStatus() == CartState.Status.OPEN);
+    }
+
+    @Test
+    public void testGetCart() throws Throwable {
+
+        // Arrange
+        Address self = new Address(CartFn.TYPE, "1");
+
+        TestContext context = TestContext.forTarget(self);
+
+        // set initial state
+        context.storage().set(CartFn.CART_STATE,new CartState());
+
+        // Actions
+        CartFn function = new CartFn();
+
+        for(int i = 1; i <= numItems; i++){
+            CartItem item = new CartItem(1,i, "testProductName" + i, 1, 1, 1, 1, "0");
+            Message message = MessageBuilder
+                    .forAddress(self)
+                    .withCustomType(CartMessages.ADD_CART_ITEM_TYPE, item)
+                    .build();
+            function.apply(context, message);
+        }
+
+        Message message = MessageBuilder
+                .forAddress(self)
+                .withCustomType(CartMessages.GET_CART_TYPE, new GetCart())
+                .build();
+        function.apply(context, message);
+
+        // Assert Sent Messages
+        List<SideEffects.EgressSideEffect> sent = context.getSentEgressMessages();
+        assert(sent.size() > 0);
+
+        byte[] byteArray = sent.get(0).message().egressMessageValueBytes().toByteArray();
+        Messages.EgressRecord egressMsg = messageMapper.readValue(byteArray, Messages.EgressRecord.class);
+
+        assert (egressMsg != null);
+
     }
 
 }

@@ -14,15 +14,15 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 
 import java.time.LocalDateTime;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class StockItem {
 
     public static final Type<StockItem> TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "StockItem"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, StockItem.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, StockItem.class));
 
     @JsonProperty("product_id")
     private int product_id;

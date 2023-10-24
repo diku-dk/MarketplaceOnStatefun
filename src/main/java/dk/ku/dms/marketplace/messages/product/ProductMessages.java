@@ -6,21 +6,21 @@ import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class ProductMessages {
 
     public static final Type<Product> UPSERT_PRODUCT_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "UpsertProduct"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, Product.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, Product.class));
 
     public static final Type<UpdatePrice> UPDATE_PRICE_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "UpdatePrice"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, UpdatePrice.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, UpdatePrice.class));
 
 
 }

@@ -73,4 +73,21 @@ public final class CartState {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    @Override
+    public String toString() {
+        return "CartState{" +
+                "status=" + status +
+                ", items=" + itemsToString() +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
+
+    private String itemsToString(){
+        StringBuilder b = new StringBuilder();
+        items.forEach(b::append);
+        return b.toString();
+    }
+
 }

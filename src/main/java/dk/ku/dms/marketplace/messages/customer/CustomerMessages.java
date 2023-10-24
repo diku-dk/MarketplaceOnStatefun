@@ -5,14 +5,14 @@ import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class CustomerMessages {
 
-    public static final Type<NotifyCustomer> TYPE =
+    public static final Type<NotifyCustomer> NOTIFY_CUSTOMER_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "NotifyCustomer"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, NotifyCustomer.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, NotifyCustomer.class));
 
 }

@@ -50,9 +50,6 @@ public final class CartItem {
         this.version = version;
     }
 
-//    @JsonCreator
-//    public CartItem(){}
-
     @JsonIgnore
     public int getProductId() {
         return this.productId;

@@ -150,7 +150,7 @@ public final class PaymentFn implements StatefulFunction {
 
         Message paymentCustomerMsg =
                 MessageBuilder.forAddress(CustomerFn.TYPE, context.self().id())
-                        .withCustomType(CustomerMessages.TYPE,
+                        .withCustomType(CustomerMessages.NOTIFY_CUSTOMER_TYPE,
                                 new NotifyCustomer(Enums.CustomerNotificationType.notify_success_payment))
                         .build();
         context.send(paymentCustomerMsg);

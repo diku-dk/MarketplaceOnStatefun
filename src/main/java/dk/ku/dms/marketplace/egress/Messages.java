@@ -5,17 +5,17 @@ import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class Messages {
 
     public static final Type<EgressRecord> EGRESS_RECORD_JSON_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf("io.statefun.playground", "EgressRecord"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, EgressRecord.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, EgressRecord.class));
 
-    public static class EgressRecord {
+    public static final class EgressRecord {
         @JsonProperty("topic")
         private String topic;
 

@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class ProductFn implements StatefulFunction {
 
@@ -34,8 +34,8 @@ public final class ProductFn implements StatefulFunction {
     public static final Type<Product> STATE_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "ProductState"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, Product.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, Product.class));
 
     public static final ValueSpec<Product> PRODUCT_STATE = ValueSpec.named("product").withCustomType(STATE_TYPE);
 

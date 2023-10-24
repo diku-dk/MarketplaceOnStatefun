@@ -9,5 +9,5 @@ public final class Identifiers {
     public static final TypeName RECEIPT_EGRESS =
             TypeName.typeNameFromString("io.statefun.playground/egress");
     public static final String RECEIPT_TOPICS = "receipts";
-    // static final String TEST_RECEIPT_TOPICS = "testreceipts";
+
 }

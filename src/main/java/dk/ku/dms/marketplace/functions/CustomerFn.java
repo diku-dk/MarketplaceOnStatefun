@@ -35,7 +35,7 @@ public final class CustomerFn implements StatefulFunction {
             // ShipmentFn ---> customer (notify shipped type)
             // OrderFn / PaymentFn ---> customer (notify failed payment type)
             // PaymentFn ---> customer (notify success payment type)
-            else if (message.is(CustomerMessages.TYPE)) {
+            else if (message.is(CustomerMessages.NOTIFY_CUSTOMER_TYPE)) {
                 onHandleNotifyCustomer(context, message);
             }
             else if (message.is(SellerMessages.DELIVERY_NOTIFICATION_TYPE)) {
@@ -55,7 +55,7 @@ public final class CustomerFn implements StatefulFunction {
     }
 
     private void onHandleNotifyCustomer(Context context, Message message) {
-        NotifyCustomer notifyCustomer = message.as(CustomerMessages.TYPE);
+        NotifyCustomer notifyCustomer = message.as(CustomerMessages.NOTIFY_CUSTOMER_TYPE);
         Enums.CustomerNotificationType notificationType = notifyCustomer.getNotifyType();
         Customer customer = getCustomerState(context);
         switch (notificationType) {

@@ -7,15 +7,15 @@ import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class Customer {
 
     public static final Type<Customer> TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "Customer"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, Customer.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, Customer.class));
 
     @JsonProperty("id")
     private int customerId;

@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class ProductTest {
 
@@ -52,8 +52,8 @@ public final class ProductTest {
         assert(sent.size() > 0);
 
         byte[] byteArray = sent.get(0).message().egressMessageValueBytes().toByteArray();
-        Messages.EgressRecord egressMsg = mapper.readValue(byteArray, Messages.EgressRecord.class);
-        TransactionMark mark = mapper.readValue(egressMsg.getPayload(), TransactionMark.class);
+        Messages.EgressRecord egressMsg = messageMapper.readValue(byteArray, Messages.EgressRecord.class);
+        TransactionMark mark = messageMapper.readValue(egressMsg.getPayload(), TransactionMark.class);
 
         assert(mark.getStatus() == Enums.MarkStatus.SUCCESS);
         assert(mark.getTid().compareTo("1") == 0);

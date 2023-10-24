@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static dk.ku.dms.marketplace.states.SellerState.SELLER_STATE_TYPE;
-import static dk.ku.dms.marketplace.utils.Constants.mapper;
+import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class SellerFn implements StatefulFunction {
 
@@ -43,8 +43,8 @@ public final class SellerFn implements StatefulFunction {
     public static final Type<Seller> ENTITY_STATE_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "SellerEntityState"),
-                    mapper::writeValueAsBytes,
-                    bytes -> mapper.readValue(bytes, Seller.class));
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, Seller.class));
 
     static final ValueSpec<Seller> SELLER_ENTITY_STATE = ValueSpec.named("SellerEntityState").withCustomType(ENTITY_STATE_TYPE);
     public static final ValueSpec<SellerState> SELLER_STATE = ValueSpec.named("SellerState").withCustomType(SELLER_STATE_TYPE);

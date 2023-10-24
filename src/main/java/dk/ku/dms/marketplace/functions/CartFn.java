@@ -1,11 +1,15 @@
 package dk.ku.dms.marketplace.functions;
 
+import dk.ku.dms.marketplace.egress.Identifiers;
+import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.cart.CartMessages;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.states.CartState;
 import org.apache.flink.statefun.sdk.java.*;
+import org.apache.flink.statefun.sdk.java.message.EgressMessage;
+import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
 import org.apache.flink.statefun.sdk.java.message.Message;
 import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
@@ -40,23 +44,21 @@ public final class CartFn implements StatefulFunction {
                 context.storage().set(CART_STATE, cartState);
             } else if(message.is(CartMessages.CUSTOMER_CHECKOUT_TYPE)){
                 CartState cartState = getCartState(context);
-
                 CustomerCheckout customerCheckout = message.as(CartMessages.CUSTOMER_CHECKOUT_TYPE);
-
                 cartState.setStatus(CartState.Status.CHECKOUT_SENT);
-
                 CheckoutRequest checkoutRequest = new CheckoutRequest(LocalDateTime.now(), customerCheckout, cartState.getItems(), customerCheckout.getInstanceId());
                 Message checkoutRequestMsg =
                         MessageBuilder.forAddress(OrderFn.TYPE, context.self().id())
                                 .withCustomType(OrderMessages.CHECKOUT_REQUEST_TYPE, checkoutRequest)
                                 .build();
-
                 context.send(checkoutRequestMsg);
-
                 onSeal(context, cartState);
             } else if(message.is(CartMessages.SEAL_TYPE)){
                 CartState cartState = getCartState(context);
                 onSeal(context, cartState);
+            } else if(message.is(CartMessages.GET_CART_TYPE)){
+                CartState cartState = getCartState(context);
+                onGetCart(context, cartState);
             }
         } catch (Exception e) {
             LOG.error("ERROR: "+e.getMessage());
@@ -69,6 +71,16 @@ public final class CartFn implements StatefulFunction {
         cartState.setStatus(CartState.Status.OPEN);
         cartState.seal();
         context.storage().set(CART_STATE, cartState);
+    }
+
+    private void onGetCart(Context context, CartState cartState) {
+        final EgressMessage egressMessage =
+                EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                        .withCustomType(
+                                Messages.EGRESS_RECORD_JSON_TYPE,
+                                new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, cartState.toString()))
+                        .build();
+        context.send(egressMessage);
     }
 
 }
