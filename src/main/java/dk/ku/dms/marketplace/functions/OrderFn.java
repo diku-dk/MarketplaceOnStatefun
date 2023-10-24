@@ -74,6 +74,9 @@ public final class OrderFn implements StatefulFunction {
             else if (message.is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE)) {
                 onShipmentNotification(context, message);
             }
+            else {
+                LOG.error("Message unknown: "+message);
+            }
         } catch (Exception e) {
             LOG.error("OrderFn error: !!!!!!!!!!!!" + e.getMessage());
         }
@@ -111,8 +114,9 @@ public final class OrderFn implements StatefulFunction {
         int idx = 0;
         for (CartItem item : checkoutRequest.getItems()) {
             AttemptReservationEvent attemptReservationEvent = new AttemptReservationEvent(orderId, item, idx);
+            String id = String.valueOf(item.getSellerId())+'/'+item.getProductId();
             Message attemptReservationMsg =
-                    MessageBuilder.forAddress(StockFn.TYPE, String.valueOf(item.getSellerId())+'/'+item.getProductId())
+                    MessageBuilder.forAddress(StockFn.TYPE, id)
                             .withCustomType(StockMessages.ATTEMPT_RESERVATION_TYPE, attemptReservationEvent)
                             .build();
             context.send(attemptReservationMsg);
@@ -214,8 +218,6 @@ public final class OrderFn implements StatefulFunction {
             OrderStatus.INVOICED,
             invoiceNumber, 
             checkoutRequest.getTimestamp(),
-            now, 
-            now, 
             null, 
             null,
             null, 
@@ -225,7 +227,7 @@ public final class OrderFn implements StatefulFunction {
             total_incentive, 
             total_amount + total_freight, 
             total_items, 
-            null);
+            "");
         
         List<OrderItem> items = new ArrayList<>();
         

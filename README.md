@@ -14,6 +14,7 @@ Further details about the benchmark can be found [here](https://github.com/diku-
 - [Getting Started](#getting-started)
     * [New Statefun Users](#statefun)
     * [Docker Preliminaries](#docker)
+    * [Marketplace APIs](#apis)
     * [Play Around](#play)
 - [Running the Benchmark](#running-benchmark)
 
@@ -59,14 +60,16 @@ docker-compose up
 
 After these commands, the application is probably up and running.
 
-### <a name="play"></a>Play Around!
+### <a name="api"></a>Marketplace APIs
 
-Let's start adding a product to the Marketplace
+#### <a name="product"></a>Product Management
+
+Let's start adding a <b>product</b> to the Marketplace
 ```
 curl -X PUT -H "Content-Type: application/vnd.marketplace/UpsertProduct" -d '{"seller_id": "1", "product_id": "1", "name" : "productTest", "sku" : "sku", "category" : "categoryTest", "description": "descriptionTest", "price" : 10, "freight_value" : 0, "version": "0"}' localhost:8090/marketplace/product/1-1
 ```
 
-Let's add now the corresponding stock for this product
+Let's add now the corresponding <b>stock</b> for this product
 ```
 curl -X PUT -H "Content-Type: application/vnd.marketplace/SetStockItem" -d '{"seller_id": "1", "product_id": "1", "qty_available" : 10, "qty_reserved" : 0, "order_count" : 0, "ytd": 0, "data" : "", "version": "0"}' localhost:8090/marketplace/stock/1-1
 ```
@@ -74,6 +77,9 @@ curl -X PUT -H "Content-Type: application/vnd.marketplace/SetStockItem" -d '{"se
 Let's send a GET request to verify whether these functions have successfully stored their respective state
 ```
 curl -X PUT -H "Content-Type: application/vnd.marketplace/GetStockItem" -d '{}' localhost:8090/marketplace/stock/1-1
+```
+
+```
 curl -X PUT -H "Content-Type: application/vnd.marketplace/GetProduct" -d '{}' localhost:8090/marketplace/product/1-1
 ```
 
@@ -89,6 +95,15 @@ StockItem{product_id=1, seller_id=1, qty_available=10, qty_reserved=0, order_cou
 Product{product_id=1, seller_id=1, name='productTest', sku='sku', category='categoryTest', description='descriptionTest', price=10.0, freight_value=0.0, status='approved', version='0', createdAt=2023-10-24T14:46:57.656, updatedAt=2023-10-24T14:46:57.656}
 ```
 
+#### <a name="customer"></a>Customer Management
+
+Now let's move on to an actual customer interaction by adding an item to a cart and checking out afterwards.
+
+First, let's add a customer to our marketplace
+```
+curl -X PUT -H "Content-Type: application/vnd.marketplace/SetCustomer" -d '{"id": 1, "first_name": "firstNameTest", "last_name" : "lastNameTest",  "address": "addressTest", "complement": "complementTest", "birth_date": "birthDateTest", "zip_code": "zipCodeTest", "city": "cityTest", "state": "stateTest", "card_number": "cardNumberTest", "card_security_number": "cardSecNumberTest", "card_expiration": "cardExpirationTest", "card_holder_name": "cardHolderNameTest", "card_type": "cardTypeTest", "data": ""}' localhost:8090/marketplace/customer/1
+```
+
 ```
 curl -X PUT -H "Content-Type: application/vnd.marketplace/GetCustomer" -d '{}' localhost:8090/marketplace/customer/1
 ```
@@ -98,12 +113,7 @@ After submitting the above commands, you may get a response like from receipts:
 Customer{id=1, firstName='firstNameTest', lastName='lastNameTest', address='addressTest', complement='complementTest', birthDate='birthDateTest', zipCode='zipCodeTest', city='cityTest', state='stateTest', cardNumber='cardNumberTest', cardSecurityNumber='cardSecNumberTest', cardExpiration='cardExpirationTest', cardHolderName='cardHolderNameTest', cardType='cardTypeTest', data='', successPaymentCount=0, failedPaymentCount=0, deliveryCount=0}
 ```
 
-Now let's move on to an actual customer interaction by adding an item to a cart and checking out afterwards.
-
-First, let's add a customer to our marketplace
-```
-curl -X PUT -H "Content-Type: application/vnd.marketplace/SetCustomer" -d '{"id": 1, "first_name": "firstNameTest", "last_name" : "lastNameTest",  "address": "addressTest", "complement": "complementTest", "birth_date": "birthDateTest", "zip_code": "zipCodeTest", "city": "cityTest", "state": "stateTest", "card_number": "cardNumberTest", "card_security_number": "cardSecNumberTest", "card_expiration": "cardExpirationTest", "card_holder_name": "cardHolderNameTest", "card_type": "cardTypeTest", "data": ""}' localhost:8090/marketplace/customer/1
-```
+#### <a name="cart"></a>Cart Management
 
 Next, let's make sure we add a cart item that actually exists in the stock
 ```
@@ -127,10 +137,15 @@ curl -X PUT -H "Content-Type: application/vnd.marketplace/CustomerCheckout" -d '
 
 The result of the checkout can be checked in the receipts endpoint
 
-If you want to modify the code, you can perform a hot deploy by running
+### <a name="play"></a>Play Around!
+
+You can modify the source code to add new functionality. For instance, you can try to allow for adding stock to some item.
+
+After modifying the code, you can perform a hot deploy by running the following command (make sure statefun-playground container has not been stopped):
 ```
 docker-compose up -d --build marketplace
 ```
+
 
 ## <a name="getting-started"></a>Running the Benchmark
 

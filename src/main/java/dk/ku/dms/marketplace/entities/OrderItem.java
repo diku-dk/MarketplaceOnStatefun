@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -76,50 +77,62 @@ public final class OrderItem {
         this.voucher = voucher;
     }
 
+    @JsonIgnore
     public float getFreightValue() {
     	return freightValue;
     }
 
+    @JsonIgnore
 	public int getOrderId() {
 		return orderId;
 	}
 
+    @JsonIgnore
 	public int getOrderItemId() {
 		return orderItemId;
 	}
 
+    @JsonIgnore
 	public int getProductId() {
 		return productId;
 	}
 
+    @JsonIgnore
 	public String getProductName() {
 		return productName;
 	}
 
+    @JsonIgnore
 	public float getUnitPrice() {
 		return unitPrice;
 	}
 
+    @JsonIgnore
 	public int getQuantity() {
 		return quantity;
 	}
 
+    @JsonIgnore
 	public float getTotalPrice() {
 		return totalPrice;
 	}
 
+    @JsonIgnore
 	public float getTotalAmount() {
 		return totalAmount;
 	}
 
+    @JsonIgnore
 	public float getVoucher() {
 		return voucher;
 	}
 
+    @JsonIgnore
 	public LocalDateTime getShippingLimitDate() {
 		return shippingLimitDate;
 	}
 
+    @JsonIgnore
 	public int getSellerId() {
 		return sellerId;
 	}

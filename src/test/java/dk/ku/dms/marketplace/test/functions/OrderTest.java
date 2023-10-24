@@ -181,7 +181,7 @@ public class OrderTest {
 
         orderState.getOrders().put(1, new Order(
                 1,1, Enums.OrderStatus.INVOICED, "1", LocalDateTime.now(), LocalDateTime.now(),
-                null, null, null, null, 1, 100, 0, 0, 100, 100, "")
+                null, null, 1, 100, 0, 0, 100, 100, "")
         );
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -235,7 +235,7 @@ public class OrderTest {
 
         orderState.getOrders().put(1, new Order(
                 1,1, Enums.OrderStatus.INVOICED, "1", LocalDateTime.now(), LocalDateTime.now(),
-                null, null, null, null, 1, 100, 0, 0, 100, 100, "")
+                null, null, 1, 100, 0, 0, 100, 100, "")
                 );
 
         List<OrderItem> orderItems = new ArrayList<>();

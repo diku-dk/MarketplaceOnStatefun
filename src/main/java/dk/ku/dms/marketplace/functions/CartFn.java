@@ -59,6 +59,8 @@ public final class CartFn implements StatefulFunction {
             } else if(message.is(CartMessages.GET_CART_TYPE)){
                 CartState cartState = getCartState(context);
                 onGetCart(context, cartState);
+            } else {
+                LOG.error("Message unknown: "+message);
             }
         } catch (Exception e) {
             LOG.error("ERROR: "+e.getMessage());

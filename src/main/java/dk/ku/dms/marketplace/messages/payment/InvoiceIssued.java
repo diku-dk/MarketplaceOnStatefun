@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.messages.payment;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -55,18 +56,22 @@ public final class InvoiceIssued {
         this.instanceId = instanceId;
     }
 
+    @JsonIgnore
     public CustomerCheckout getCustomerCheckout() {
         return customerCheckout;
     }
 
+    @JsonIgnore
     public List<OrderItem> getItems() {
         return items;
     }
 
+    @JsonIgnore
     public int getOrderId() {
         return orderId;
     }
 
+    @JsonIgnore
     public float getTotalInvoice() {
         return totalInvoice;
     }

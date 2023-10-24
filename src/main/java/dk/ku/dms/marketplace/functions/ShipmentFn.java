@@ -12,6 +12,8 @@ import dk.ku.dms.marketplace.messages.seller.DeliveryNotification;
 import dk.ku.dms.marketplace.messages.seller.SellerMessages;
 import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
 import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
+import dk.ku.dms.marketplace.messages.shipment.UpdateShipment;
+import dk.ku.dms.marketplace.messages.shipment.UpdateShipmentAck;
 import dk.ku.dms.marketplace.states.ShipmentState;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.*;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public final class ShipmentFn implements StatefulFunction {
 
@@ -64,6 +67,9 @@ public final class ShipmentFn implements StatefulFunction {
             }
             else if (message.is(ShipmentMessages.UPDATE_SHIPMENT_TYPE)) {
                 onUpdateShipment(context, message);
+            }
+            else {
+                LOG.error("Message unknown: "+message);
             }
         } catch (Exception e) {
             LOG.error(e.getMessage());
@@ -127,9 +133,21 @@ public final class ShipmentFn implements StatefulFunction {
         context.storage().set(SHIPMENT_STATE, shipmentState);
 
         ShipmentNotification shipmentNotification = new ShipmentNotification(
-                paymentConfirmed.getOrderId(), paymentConfirmed.getCustomerCheckout().getCustomerId(),
-                Enums.ShipmentStatus.APPROVED, now
-                );
+                paymentConfirmed.getOrderId(),
+                paymentConfirmed.getCustomerCheckout().getCustomerId(),
+                Enums.ShipmentStatus.APPROVED,
+                now
+        );
+
+        List<Integer> sellerIds = paymentConfirmed.getItems().stream().map(OrderItem::getSellerId).distinct().collect(Collectors.toList());
+        for (int sellerId : sellerIds) {
+            Message paymentSellerMsg =
+                    MessageBuilder.forAddress(SellerFn.TYPE, String.valueOf(sellerId))
+                            .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE,
+                                    shipmentNotification)
+                            .build();
+            context.send(paymentSellerMsg);
+        }
 
         Message shipmentOrderMsg =
                 MessageBuilder.forAddress(OrderFn.TYPE, context.self().id())
@@ -137,26 +155,6 @@ public final class ShipmentFn implements StatefulFunction {
                                 shipmentNotification)
                         .build();
         context.send(shipmentOrderMsg);
-
-//        List<OrderItem> orderItems = invoice.getItems();
-//        List<Integer> sellerIds = new ArrayList<>();
-//        for (OrderItem orderItem : orderItems) {
-//            if (!sellerIds.contains(orderItem.getSellerId())) {
-//                sellerIds.add(orderItem.getSellerId());
-//                Utils.sendMessage(
-//                        context,
-//                        SellerFn.TYPE,
-//                        String.valueOf(orderItem.getSellerId()),
-//                        ShipmentNotification.TYPE,
-//                        new ShipmentNotification(
-//                                invoice.getOrderID(),
-//                                invoice.getCustomerCheckout().getCustomerId(),
-//                                Enums.ShipmentStatus.APPROVED,
-//                                now
-//                        )
-//                );
-//            }
-//        }
 
         TransactionMark mark = new TransactionMark(paymentConfirmed.getInstanceId(),
                 Enums.TransactionType.CUSTOMER_SESSION, paymentConfirmed.getCustomerCheckout().getCustomerId(),
@@ -173,40 +171,9 @@ public final class ShipmentFn implements StatefulFunction {
 
     }
 
-//
-//    private void onGetPendingPackages(Context context, Message message) {
-//        int sellerId = message.as(GetPendingPackages.TYPE).getSellerID();
-//        ShipmentState shipmentState = getShipmentState(context);
-//        Map<Integer, List<Package>> packages = shipmentState.getPackages();
-//
-//        List<Package> pendingPackages =
-//                packages.values().stream()
-//                .flatMap(List::stream)
-//                .filter(p -> p.getPackageStatus().equals(Enums.PackageStatus.SHIPPED) && p.getSellerId() == sellerId)
-//                .collect(Collectors.toList());
-//
-//
-//        String pendingPackagesStr = pendingPackages.stream()
-//                .map(Package::toString)
-//                .collect(Collectors.joining("\n"));
-//
-//        String log = getPartionText(context.self().id()) + "PendingPackages: \n" + pendingPackagesStr + "\n";
-////        logger.info(log);
-//    }
-//
-//    /**
-//     * get the oldest (OPEN) shipment per seller
-//     * select seller id, min(shipment id)
-//     * from packages
-//     * where packages.status == shipped
-//     * group by seller id
-//     *
-//     */
-
     private void onUpdateShipment(Context context, Message message) { // throws SQLException, JsonProcessingException {
 
         ShipmentState shipmentState = getShipmentState(context);
-        // Map<Integer, List<Package>> packages = shipmentState.getPackages();
 
         // the minimum shipment ID for each seller.
         Map<Integer, Integer> q = shipmentState.getOldestOpenShipmentPerSeller();
@@ -215,12 +182,20 @@ public final class ShipmentFn implements StatefulFunction {
             List<Package> sellerPackages = shipmentState.getShippedPackagesByShipmentIdAndSellerId(kv.getKey(), kv.getValue());
             updatePackageDelivery(context, shipmentState, sellerPackages, kv.getKey(), kv.getValue());
         }
-//
+
         context.storage().set(SHIPMENT_STATE, shipmentState);
-//
-//        UpdateShipment updateShipment = message.as(UpdateShipment.TYPE);
-//        // send ack to caller (proxy)
-//        Utils.sendMessageToCaller(context, UpdateShipment.TYPE, updateShipment);
+
+        UpdateShipment updateShipment = message.as(ShipmentMessages.UPDATE_SHIPMENT_TYPE);
+        // send ack to caller (proxy)
+        if(context.caller().isPresent()) {
+            Message updateShipmentMsg =
+                    MessageBuilder.forAddress(ShipmentProxyFn.TYPE, context.caller().get().id())
+                            .withCustomType(ShipmentMessages.UPDATE_SHIPMENT_ACK_TYPE, new UpdateShipmentAck(updateShipment.getTid()))
+                            .build();
+            context.send(updateShipmentMsg);
+        } else {
+            LOG.error("Caller is not present!");
+        }
     }
 
     private void updatePackageDelivery(Context context, ShipmentState shipmentState,
@@ -228,28 +203,6 @@ public final class ShipmentFn implements StatefulFunction {
 
         Shipment shipment = shipmentState.getShipments().get(shipmentId);
         LocalDateTime now = LocalDateTime.now();
-
-        if (shipment.getStatus() == Enums.ShipmentStatus.APPROVED) {
-            shipment.setStatus(Enums.ShipmentStatus.DELIVERY_IN_PROGRESS);
-
-            ShipmentNotification shipmentNotification = new ShipmentNotification(
-                    shipment.getOrderId(),
-                    shipment.getCustomerId(),
-                    shipment.getStatus(),
-                    now
-            );
-
-            Message shipmentNotificationMsg =
-                    MessageBuilder.forAddress(OrderFn.TYPE, String.valueOf(shipment.getCustomerId()))
-                            .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE, shipmentNotification)
-                            .build();
-            context.send(shipmentNotificationMsg);
-
-//            Utils.sendMessage(
-//                    context, SellerFn.TYPE, String.valueOf(sellerID),
-//                    ShipmentNotification.TYPE, shipmentNotification
-//            );
-        }
 
         long countDelivered = shipmentState.getTotalDeliveredPackagesForShipment(shipmentId);
 
@@ -268,17 +221,36 @@ public final class ShipmentFn implements StatefulFunction {
                     now
             );
 
-//            Utils.sendMessage(
-//                    context, SellerFn.TYPE, String.valueOf(sellerID),
-//                    DeliveryNotification.TYPE, deliveryNotification
-//            );
-
             // notify customer
-            Message deliveryNotificationCustomerMsg =
+            Message deliveryCustomerNotificationMsg =
                     MessageBuilder.forAddress(CustomerFn.TYPE, String.valueOf(shipment.getCustomerId()))
                             .withCustomType(SellerMessages.DELIVERY_NOTIFICATION_TYPE, deliveryNotification)
                             .build();
-            context.send(deliveryNotificationCustomerMsg);
+            context.send(deliveryCustomerNotificationMsg);
+
+            // notify seller
+            Message deliverySellerNotificationMsg =
+                    MessageBuilder.forAddress(SellerFn.TYPE, String.valueOf(p.getSellerId()))
+                            .withCustomType(SellerMessages.DELIVERY_NOTIFICATION_TYPE, deliveryNotification)
+                            .build();
+            context.send(deliverySellerNotificationMsg);
+        }
+
+        if (shipment.getStatus() == Enums.ShipmentStatus.APPROVED) {
+            shipment.setStatus(Enums.ShipmentStatus.DELIVERY_IN_PROGRESS);
+
+            ShipmentNotification shipmentNotification = new ShipmentNotification(
+                    shipment.getOrderId(),
+                    shipment.getCustomerId(),
+                    shipment.getStatus(),
+                    now
+            );
+
+            Message shipmentOrderNotificationMsg =
+                    MessageBuilder.forAddress(OrderFn.TYPE, String.valueOf(shipment.getCustomerId()))
+                            .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE, shipmentNotification)
+                            .build();
+            context.send(shipmentOrderNotificationMsg);
         }
 
         if (shipment.getPackageCount() == countDelivered + sellerPackages.size()) {
@@ -290,17 +262,23 @@ public final class ShipmentFn implements StatefulFunction {
                     now
             );
 
+            // FIXME should notify all sellers included in the shipment [leave like this for now]
+            Message shipmentSellerNotificationMsg =
+                    MessageBuilder.forAddress(SellerFn.TYPE, String.valueOf(sellerPackages.get(0).getSellerId()) )
+                            .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE, shipmentNotification)
+                            .build();
+            context.send(shipmentSellerNotificationMsg);
+
             Message shipmentNotificationMsg =
                     MessageBuilder.forAddress(OrderFn.TYPE, String.valueOf(shipment.getCustomerId()))
                             .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE, shipmentNotification)
                             .build();
             context.send(shipmentNotificationMsg);
 
-//            Utils.sendMessage(
-//                    context, SellerFn.TYPE, String.valueOf(sellerID),
-//                    ShipmentNotification.TYPE, shipmentNotification
-//            );
-//
+            // clean state
+            shipmentState.getShipments().remove(shipmentId);
+            shipmentState.getPackages().remove(shipmentId);
+
 //            //  todo
 //            String type = "ShipmentFn";
 //            String id_ = String.valueOf(shipment.getShipmentId());
@@ -309,10 +287,7 @@ public final class ShipmentFn implements StatefulFunction {
 //            Statement st = conn.createStatement();
 //            String sql = String.format("INSERT INTO public.log (\"type\",\"key\",\"value\") VALUES ('%s', '%s', '%s')", type, id_, orderJson);
 //            st.execute(sql);
-//
-//            shipments.remove(shipmentId);
-//            packages.remove(shipmentId);
-//
+
         }
     }
 }

@@ -94,6 +94,9 @@ public final class SellerFn implements StatefulFunction {
             else if (message.is(SellerMessages.DELIVERY_NOTIFICATION_TYPE)) {
                 onDeliveryNotification(context, message);
             }
+            else {
+                LOG.error("Message unknown: "+message);
+            }
         } catch (Exception e) {
             LOG.error("SellerFn apply error !!!!!!!!!!!!!!!");
         }

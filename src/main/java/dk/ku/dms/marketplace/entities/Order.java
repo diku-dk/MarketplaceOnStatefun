@@ -70,17 +70,17 @@ public final class Order {
     private final String data;
 
     @JsonCreator
-    public Order(int id, int customerId, Enums.OrderStatus status, String invoiceNumber, LocalDateTime purchaseTimestamp,
-                 LocalDateTime created_at, LocalDateTime updated_at, LocalDateTime paymentDate, LocalDateTime delivered_carrier_date,
-                 LocalDateTime delivered_customer_date, int countItems, float totalAmount, float totalFreight,
-                 float totalIncentive, float totalInvoice, float totalItems, String data) {
+    public Order(@JsonProperty("id") int id, @JsonProperty("customerId") int customerId, @JsonProperty("status") Enums.OrderStatus status, @JsonProperty("invoiceNumber") String invoiceNumber, @JsonProperty("purchaseTimestamp") LocalDateTime purchaseTimestamp,
+                 @JsonProperty("paymentDate") LocalDateTime paymentDate, @JsonProperty("delivered_carrier_date") LocalDateTime delivered_carrier_date,
+                 @JsonProperty("delivered_customer_date") LocalDateTime delivered_customer_date, @JsonProperty("countItems") int countItems, @JsonProperty("totalAmount") float totalAmount, @JsonProperty("totalFreight") float totalFreight,
+                 @JsonProperty("totalIncentive") float totalIncentive, @JsonProperty("totalInvoice") float totalInvoice, @JsonProperty("totalItems") float totalItems, @JsonProperty("data") String data) {
         this.id = id;
         this.customerId = customerId;
         this.status = status;
         this.invoiceNumber = invoiceNumber;
         this.purchaseTimestamp = purchaseTimestamp;
-        this.created_at = created_at;
-        this.updated_at = updated_at;
+        this.created_at = LocalDateTime.now();
+        this.updated_at = this.created_at;
         this.paymentDate = paymentDate;
         this.delivered_carrier_date = delivered_carrier_date;
         this.delivered_customer_date = delivered_customer_date;
@@ -93,16 +93,19 @@ public final class Order {
         this.data = data;
     }
 
+    @JsonIgnore
     public int getId() {
         return id;
     }
 
+    @JsonIgnore
     public float getTotalInvoice() {
         return totalInvoice;
     }
 
-    public String getInvoiceNumber() {
-        return invoiceNumber;
+    @JsonIgnore
+    public Enums.OrderStatus getStatus() {
+        return status;
     }
 
     public void setStatus(Enums.OrderStatus status) {
@@ -117,8 +120,4 @@ public final class Order {
         this.delivered_customer_date = eventDate;
     }
 
-    @JsonIgnore
-    public Enums.OrderStatus getStatus() {
-        return status;
-    }
 }

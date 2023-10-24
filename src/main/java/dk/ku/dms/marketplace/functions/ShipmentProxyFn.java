@@ -44,6 +44,9 @@ public final class ShipmentProxyFn implements StatefulFunction {
             else if (message.is(ShipmentMessages.UPDATE_SHIPMENT_ACK_TYPE)) {
                 onProcessShipmentAck(context, message);
             }
+            else {
+                LOG.error("Message unknown: "+message);
+            }
         } catch (Exception e) {
             LOG.error("Exception in ShipmentProxyFn: " + e.getMessage());
         }

@@ -60,6 +60,9 @@ public final class ProductFn implements StatefulFunction {
             else if(message.is(ProductMessages.GET_PRODUCT_TYPE)){
                 onGetProduct(context);
             }
+            else {
+                LOG.error("Message unknown: "+message);
+            }
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }

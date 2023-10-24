@@ -49,6 +49,9 @@ public final class PaymentFn implements StatefulFunction {
             if (message.is(PaymentMessages.INVOICE_ISSUED_TYPE)) {
                 onProcessPayment(context, message);
             }
+            else {
+                LOG.error("Message unknown: "+message);
+            }
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }

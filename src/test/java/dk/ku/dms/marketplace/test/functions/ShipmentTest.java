@@ -73,7 +73,7 @@ public class ShipmentTest {
 
         List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
 
-        assert (sentMessages.size() == 1);
+        assert (sentMessages.size() == 2);
 
         assert(sentMessages.get(0).message().is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE));
 
@@ -87,8 +87,9 @@ public class ShipmentTest {
 
         // Arrange
         Address self = new Address(ShipmentFn.TYPE, "1");
+        Address caller = new Address(ShipmentProxyFn.TYPE, "1");
 
-        TestContext context = TestContext.forTarget(self);
+        TestContext context = TestContext.forTargetWithCaller(self, caller);
 
         ShipmentState shipmentState = new ShipmentState();
 
@@ -116,14 +117,17 @@ public class ShipmentTest {
 
         List<SideEffects.SendSideEffect> sentMessages = context.getSentMessages();
 
-        assert (sentMessages.size() == 3);
+        assert (sentMessages.size() == 6);
 
-        assert(sentMessages.get(0).message().is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE));
+        assert(sentMessages.get(0).message().is(SellerMessages.DELIVERY_NOTIFICATION_TYPE));
         assert(sentMessages.get(1).message().is(SellerMessages.DELIVERY_NOTIFICATION_TYPE));
         assert(sentMessages.get(2).message().is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE));
+        assert(sentMessages.get(3).message().is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE));
+        assert(sentMessages.get(4).message().is(OrderMessages.SHIPMENT_NOTIFICATION_TYPE));
+        assert(sentMessages.get(5).message().is(ShipmentMessages.UPDATE_SHIPMENT_ACK_TYPE));
 
         assert(context.storage().get(ShipmentFn.SHIPMENT_STATE).isPresent()
-                && context.storage().get(ShipmentFn.SHIPMENT_STATE).get().getShipments().get(1).getStatus() == Enums.ShipmentStatus.CONCLUDED);
+                && context.storage().get(ShipmentFn.SHIPMENT_STATE).get().getShipments().size() == 0);
 
     }
 
@@ -179,7 +183,6 @@ public class ShipmentTest {
 
         assert(context.storage().get(ShipmentProxyFn.PROXY_STATE).isPresent()
                 && !context.storage().get(ShipmentProxyFn.PROXY_STATE).get().tidList.containsKey("1"));
-
 
     }
 

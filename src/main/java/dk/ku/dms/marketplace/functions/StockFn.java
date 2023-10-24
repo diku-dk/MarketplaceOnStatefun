@@ -59,6 +59,8 @@ public final class StockFn implements StatefulFunction {
                 onHandlePaymentResult(context, message);
             } else if (message.is(StockMessages.GET_STOCK_ITEM_TYPE)) {
                 onGetStockItem(context);
+            } else {
+                LOG.error("Message unknown: "+message);
             }
         } catch (Exception e) {
             LOG.error(e.getMessage());
@@ -135,7 +137,7 @@ public final class StockFn implements StatefulFunction {
         if (caller.isPresent()) {
             AttemptReservationResponse resp =
                     new AttemptReservationResponse(attemptReservationEvent.getOrderId(), cartItem.getSellerId(), cartItem.getProductId(), status, attemptReservationEvent.getIdx());
-            final Message request = MessageBuilder.forAddress(StockFn.TYPE, caller.get().id())
+            final Message request = MessageBuilder.forAddress(OrderFn.TYPE, caller.get().id())
                                                     .withCustomType(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE, resp)
                                                     .build();
             context.send(request);
@@ -149,6 +151,7 @@ public final class StockFn implements StatefulFunction {
         StockItem stockItem = context.storage().get(STOCK_STATE).orElse(null);
 
         if(stockItem == null){
+            LOG.error("Stock state has not been set: "+context.self().id());
             return Enums.ItemStatus.UNKNOWN;
         }
 
