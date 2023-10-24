@@ -34,4 +34,10 @@ public final class StockMessages {
                     messageMapper::writeValueAsBytes,
                     bytes -> messageMapper.readValue(bytes, StockItem.class));
 
+    public static final Type<GetStockItem> GET_STOCK_ITEM_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "GetStockItem"),
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, GetStockItem.class));
+
 }

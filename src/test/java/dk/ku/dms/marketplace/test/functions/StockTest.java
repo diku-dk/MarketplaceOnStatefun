@@ -3,7 +3,7 @@ package dk.ku.dms.marketplace.test.functions;
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.StockItem;
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.functions.OrderFn;
 import dk.ku.dms.marketplace.functions.StockFn;
 import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;

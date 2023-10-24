@@ -18,7 +18,7 @@ public final class Customer {
                     bytes -> messageMapper.readValue(bytes, Customer.class));
 
     @JsonProperty("id")
-    private int customerId;
+    private int id;
 
     @JsonProperty("first_name")
     private String firstName;
@@ -33,7 +33,7 @@ public final class Customer {
     private String complement;
 
     @JsonProperty("birth_date")
-    private String birth_date;
+    private String birthDate;
 
     @JsonProperty("zip_code")
     private String zipCode;
@@ -73,12 +73,12 @@ public final class Customer {
 
     @JsonCreator
     public Customer(
-            @JsonProperty("id") int customerId,
+            @JsonProperty("id") int id,
             @JsonProperty("first_name") String firstName,
             @JsonProperty("last_name") String lastName,
             @JsonProperty("address") String address,
             @JsonProperty("complement") String complement,
-            @JsonProperty("birth_date") String birth_date,
+            @JsonProperty("birth_date") String birthDate,
             @JsonProperty("zip_code") String zipCode,
             @JsonProperty("city") String city,
             @JsonProperty("state") String state,
@@ -87,19 +87,13 @@ public final class Customer {
             @JsonProperty("card_expiration") String cardExpiration,
             @JsonProperty("card_holder_name") String cardHolderName,
             @JsonProperty("card_type") String cardType,
-            @JsonProperty("data") String data,
-            @JsonProperty("success_payment_count") int successPaymentCount,
-            @JsonProperty("failed_payment_count") int failedPaymentCount,
-            @JsonProperty("pendingDeliveriesCount") int pendingDeliveriesCount,
-            @JsonProperty("abandoned_cart_count") int abandonedCartCount,
-            @JsonProperty("delivery_count") int deliveryCount
-            ) {
-        this.customerId = customerId;
+            @JsonProperty("data") String data) {
+        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.address = address;
         this.complement = complement;
-        this.birth_date = birth_date;
+        this.birthDate = birthDate;
         this.zipCode = zipCode;
         this.city = city;
         this.state = state;
@@ -109,9 +103,9 @@ public final class Customer {
         this.cardHolderName = cardHolderName;
         this.cardType = cardType;
         this.data = data;
-        this.successPaymentCount = successPaymentCount;
-        this.failedPaymentCount = failedPaymentCount;
-        this.deliveryCount = deliveryCount;
+        this.successPaymentCount = 0;
+        this.failedPaymentCount = 0;
+        this.deliveryCount = 0;
     }
 
     @JsonCreator
@@ -129,4 +123,31 @@ public final class Customer {
         this.deliveryCount++;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "id=" + id +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", address='" + address + '\'' +
+                ", complement='" + complement + '\'' +
+                ", birthDate='" + birthDate + '\'' +
+                ", zipCode='" + zipCode + '\'' +
+                ", city='" + city + '\'' +
+                ", state='" + state + '\'' +
+                ", cardNumber='" + cardNumber + '\'' +
+                ", cardSecurityNumber='" + cardSecurityNumber + '\'' +
+                ", cardExpiration='" + cardExpiration + '\'' +
+                ", cardHolderName='" + cardHolderName + '\'' +
+                ", cardType='" + cardType + '\'' +
+                ", data='" + data + '\'' +
+                ", successPaymentCount=" + successPaymentCount +
+                ", failedPaymentCount=" + failedPaymentCount +
+                ", deliveryCount=" + deliveryCount +
+                '}';
+    }
 }

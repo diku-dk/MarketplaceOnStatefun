@@ -25,9 +25,9 @@ public final class StockItem {
                     bytes -> messageMapper.readValue(bytes, StockItem.class));
 
     @JsonProperty("product_id")
-    private int product_id;
+    private final int product_id;
     @JsonProperty("seller_id")
-    private int seller_id;
+    private final int seller_id;
     @JsonProperty("qty_available")
     private int qty_available;
     @JsonProperty("qty_reserved")

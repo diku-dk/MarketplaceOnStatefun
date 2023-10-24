@@ -12,7 +12,7 @@ public class Constants {
         messageMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
-    public static final String TYPES_NAMESPACE = "marketplace.types";
+    public static final String TYPES_NAMESPACE = "marketplace";
 
     public static final int nShipmentPartitions = 100;
 

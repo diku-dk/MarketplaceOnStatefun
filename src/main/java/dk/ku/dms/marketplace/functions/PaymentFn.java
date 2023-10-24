@@ -1,6 +1,6 @@
 package dk.ku.dms.marketplace.functions;
 
-import dk.ku.dms.marketplace.entities.CustomerCheckout;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.OrderPayment;
 import dk.ku.dms.marketplace.entities.OrderPaymentCard;
@@ -44,7 +44,6 @@ public final class PaymentFn implements StatefulFunction {
 
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
-        LOG.info("Payment "+context.self().id()+" received!");
         try {
             // stock --> payment (request to payment)
             if (message.is(PaymentMessages.INVOICE_ISSUED_TYPE)) {
@@ -68,9 +67,9 @@ public final class PaymentFn implements StatefulFunction {
 
         int seq = 1;
         boolean cc = (customerCheckout.getPaymentType().equals(Enums.PaymentType.CREDIT_CARD.toString()));
-//
+
         // create payment tuple
-        List<OrderPayment> orderPayments = new ArrayList<OrderPayment>();
+        List<OrderPayment> orderPayments = new ArrayList<>();
         OrderPaymentCard card = null;
         if (cc || customerCheckout.getPaymentType().equals(Enums.PaymentType.DEBIT_CARD.toString())) {
             OrderPayment cardPaymentLine = new OrderPayment(

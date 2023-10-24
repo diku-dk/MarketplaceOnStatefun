@@ -2,7 +2,7 @@ package dk.ku.dms.marketplace.functions;
 
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
 import dk.ku.dms.marketplace.messages.shipment.UpdateShipment;
 import dk.ku.dms.marketplace.messages.shipment.UpdateShipmentAck;

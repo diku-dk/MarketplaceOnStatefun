@@ -1,6 +1,6 @@
 package dk.ku.dms.marketplace.test.functions;
 
-import dk.ku.dms.marketplace.entities.CustomerCheckout;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.functions.PaymentFn;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;

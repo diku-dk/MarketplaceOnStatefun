@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import dk.ku.dms.marketplace.entities.CustomerCheckout;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderItem;
 
 import java.time.LocalDateTime;

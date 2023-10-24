@@ -4,7 +4,7 @@ import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.StockItem;
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.messages.order.AttemptReservationResponse;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
@@ -57,12 +57,30 @@ public final class StockFn implements StatefulFunction {
             // payment ---> stock (payment result finally decided change stock or not
             else if (message.is(StockMessages.PAYMENT_STOCK_EVENT_TYPE)) {
                 onHandlePaymentResult(context, message);
+            } else if (message.is(StockMessages.GET_STOCK_ITEM_TYPE)) {
+                onGetStockItem(context);
             }
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
 
         return context.done();
+    }
+
+    private void onGetStockItem(Context context) {
+        StockItem stockItem =  context.storage().get(STOCK_STATE).orElse(null);
+        if(stockItem == null){
+            LOG.error("Stock item not present in state. ID = "+context.self().id());
+            return;
+        }
+
+        final EgressMessage egressMessage =
+                EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                        .withCustomType(
+                                Messages.EGRESS_RECORD_JSON_TYPE,
+                                new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, stockItem.toString()))
+                        .build();
+        context.send(egressMessage);
     }
 
     private void onUpdateProduct(Context context, Message message) {

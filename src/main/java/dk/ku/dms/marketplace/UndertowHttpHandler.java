@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public final class UndertowHttpHandler implements HttpHandler {
-
     private final RequestReplyHandler handler;
 
     public UndertowHttpHandler(RequestReplyHandler handler) {
@@ -25,7 +24,7 @@ public final class UndertowHttpHandler implements HttpHandler {
 
     private void onRequestBody(HttpServerExchange exchange, byte[] requestBytes) {
         try {
-            CompletableFuture<Slice> future = this.handler.handle(Slices.wrap(requestBytes));
+            CompletableFuture<Slice> future = handler.handle(Slices.wrap(requestBytes));
             exchange.dispatch();
             future.whenComplete(
                     (responseBytes, ex) -> {

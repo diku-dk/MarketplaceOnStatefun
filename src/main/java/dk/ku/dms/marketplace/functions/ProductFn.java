@@ -3,7 +3,7 @@ package dk.ku.dms.marketplace.functions;
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.Product;
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.messages.product.ProductMessages;
 import dk.ku.dms.marketplace.messages.product.UpdatePrice;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
@@ -56,11 +57,28 @@ public final class ProductFn implements StatefulFunction {
             else if (message.is(ProductMessages.UPDATE_PRICE_TYPE)) {
                 onUpdatePrice(context, message);
             }
-
+            else if(message.is(ProductMessages.GET_PRODUCT_TYPE)){
+                onGetProduct(context);
+            }
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
         return context.done();
+    }
+
+    private void onGetProduct(Context context) {
+        Optional<Product> opProd = context.storage().get(PRODUCT_STATE);
+        if(opProd.isPresent()) {
+            final EgressMessage egressMessage =
+                    EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                            .withCustomType(
+                                    Messages.EGRESS_RECORD_JSON_TYPE,
+                                    new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, opProd.get().toString()))
+                            .build();
+            context.send(egressMessage);
+        } else {
+            LOG.error("Product not present in state. ID = "+context.self().id());
+        }
     }
 
     private void onUpdateProduct(Context context, Message message) {

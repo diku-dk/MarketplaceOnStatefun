@@ -5,7 +5,7 @@ import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.Package;
 import dk.ku.dms.marketplace.entities.Shipment;
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.seller.DeliveryNotification;

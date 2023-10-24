@@ -2,7 +2,7 @@ package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.Product;
-import dk.ku.dms.marketplace.entities.TransactionMark;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.functions.ProductFn;
 import dk.ku.dms.marketplace.messages.product.ProductMessages;
 import dk.ku.dms.marketplace.messages.product.UpdatePrice;

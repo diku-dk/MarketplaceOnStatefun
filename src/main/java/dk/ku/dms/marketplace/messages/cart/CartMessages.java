@@ -1,7 +1,6 @@
 package dk.ku.dms.marketplace.messages.cart;
 
 import dk.ku.dms.marketplace.entities.CartItem;
-import dk.ku.dms.marketplace.entities.CustomerCheckout;
 import dk.ku.dms.marketplace.utils.Constants;
 import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
