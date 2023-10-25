@@ -124,4 +124,26 @@ public final class Order {
     	return customerId;
     }
 
+    @Override
+    public String toString() {
+        return "Order{" +
+                "id=" + id +
+                ", customerId=" + customerId +
+                ", status=" + status +
+                ", invoiceNumber='" + invoiceNumber + '\'' +
+                ", purchaseTimestamp=" + purchaseTimestamp +
+                ", created_at=" + created_at +
+                ", updated_at=" + updated_at +
+                ", paymentDate=" + paymentDate +
+                ", delivered_carrier_date=" + delivered_carrier_date +
+                ", delivered_customer_date=" + delivered_customer_date +
+                ", countItems=" + countItems +
+                ", totalAmount=" + totalAmount +
+                ", totalFreight=" + totalFreight +
+                ", totalIncentive=" + totalIncentive +
+                ", totalInvoice=" + totalInvoice +
+                ", totalItems=" + totalItems +
+                ", data='" + data + '\'' +
+                '}';
+    }
 }

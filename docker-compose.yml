@@ -18,7 +18,7 @@ services:
   ###############################################################
 
   statefun:
-    image: flink-statefun-playground:latest
+    image: apache/flink-statefun-playground:latest
     ports:
       - "8081:8081"
       - "8090:8090"

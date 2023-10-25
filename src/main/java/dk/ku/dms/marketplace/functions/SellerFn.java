@@ -163,30 +163,35 @@ public final class SellerFn implements StatefulFunction {
         SellerState sellerState = getSellerState(context);
 
         List<OrderEntry> orderEntries = sellerState.getOrderEntries().entrySet().stream().flatMap(f->f.getValue().stream()).collect(Collectors.toList());
-
-        int sellerId =  Integer.parseInt(context.self().id());
+        TransactionMark mark;
+        int sellerId = Integer.parseInt(context.self().id());
         String tid = message.as(SellerMessages.QUERY_DASHBOARD_TYPE).getTid();
-        OrderSellerView orderSellerView = new OrderSellerView(
-                sellerId,
-                sellerState.getOrderEntries().size(),
-                orderEntries.size(),
-                (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalAmount).sum(),
-                (float) orderEntries.stream().mapToDouble(OrderEntry::getFreightValue).sum(),
-                (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalIncentive).sum(),
-                (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalInvoice).sum(),
-                (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalItems).sum()
-        );
+        if(orderEntries.size() > 0) {
+            OrderSellerView orderSellerView = new OrderSellerView(
+                    sellerId,
+                    sellerState.getOrderEntries().size(),
+                    orderEntries.size(),
+                    (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalAmount).sum(),
+                    (float) orderEntries.stream().mapToDouble(OrderEntry::getFreightValue).sum(),
+                    (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalIncentive).sum(),
+                    (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalInvoice).sum(),
+                    (float) orderEntries.stream().mapToDouble(OrderEntry::getTotalItems).sum()
+            );
 
-        SellerDashboard sellerDashboard = new SellerDashboard(
-                orderSellerView,
-                orderEntries
-        );
+            SellerDashboard sellerDashboard = new SellerDashboard(
+                    orderSellerView,
+                    orderEntries
+            );
 
-        // must also account for the publishing of the result somewhere... not just the transaction mark payload
-        byte[] res = objectMapper.writeValueAsBytes(sellerDashboard);
+            // must also account for the publishing of the result somewhere... not just the transaction mark payload
+            byte[] res = objectMapper.writeValueAsBytes(sellerDashboard);
 
-        TransactionMark mark = new TransactionMark(tid,
-                Enums.TransactionType.QUERY_DASHBOARD, sellerId, Enums.MarkStatus.SUCCESS, Arrays.toString(res));// "seller");
+            mark = new TransactionMark(tid,
+                    Enums.TransactionType.QUERY_DASHBOARD, sellerId, Enums.MarkStatus.SUCCESS, Arrays.toString(res));
+        } else {
+            mark = new TransactionMark(tid,
+                    Enums.TransactionType.QUERY_DASHBOARD, sellerId, Enums.MarkStatus.SUCCESS, "seller");
+        }
 
         final EgressMessage egressMessage =
                 EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)

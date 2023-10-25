@@ -9,6 +9,12 @@ import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class OrderMessages {
 
+    public static final Type<GetOrders> GET_ORDERS_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "GetOrders"),
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, GetOrders.class));
+
     public static final Type<AttemptReservationResponse> ATTEMPT_RESERVATION_RESPONSE_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "AttemptReservationResponse"),

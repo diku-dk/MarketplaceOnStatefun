@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.messages.shipment;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class UpdateShipment {
@@ -13,7 +14,9 @@ public final class UpdateShipment {
         this.tid = tid;
     }
 
+    @JsonIgnore
     public String getTid() {
         return tid;
     }
+
 }
