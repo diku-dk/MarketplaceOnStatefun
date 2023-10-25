@@ -1,5 +1,6 @@
 package dk.ku.dms.marketplace.states;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ku.dms.marketplace.utils.Constants;
@@ -22,7 +23,17 @@ public final class ShipmentProxyState {
     @JsonProperty("tidList")
     public final HashMap<String, Integer> tidList;
 
-    public ShipmentProxyState() {
+    @JsonCreator
+    public ShipmentProxyState(@JsonProperty("tidList") HashMap<String, Integer> tidList) {
+        this.tidList = tidList;
+    }
+
+    private ShipmentProxyState() {
         this.tidList = new HashMap<>();
     }
+
+    public static ShipmentProxyState build(){
+        return new ShipmentProxyState();
+    }
+
 }

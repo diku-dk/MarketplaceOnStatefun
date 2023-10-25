@@ -1,5 +1,6 @@
 package dk.ku.dms.marketplace.states;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,9 +34,20 @@ public final class ShipmentState {
     @JsonProperty("packages")
     private final Map<Integer, List<Package>> packages;
 
-    public ShipmentState() {
+    @JsonCreator
+    public ShipmentState(@JsonProperty("shipments") Map<Integer, Shipment> shipments,
+                         @JsonProperty("packages") Map<Integer, List<Package>> packages) {
+        this.shipments = shipments;
+        this.packages = packages;
+    }
+
+    private ShipmentState() {
         this.shipments = new HashMap<>();
         this.packages = new HashMap<>();
+    }
+
+    public static ShipmentState build(){
+        return new ShipmentState();
     }
 
     public Map<Integer, Shipment> getShipments() {

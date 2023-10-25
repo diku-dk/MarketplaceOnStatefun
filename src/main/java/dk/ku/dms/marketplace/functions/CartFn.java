@@ -2,8 +2,8 @@ package dk.ku.dms.marketplace.functions;
 
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.cart.CartMessages;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.states.CartState;
@@ -32,7 +32,7 @@ public final class CartFn implements StatefulFunction {
                                                         .build();
 
     private CartState getCartState(Context context) {
-        return context.storage().get(CART_STATE).orElse(new CartState());
+        return context.storage().get(CART_STATE).orElse(CartState.build());
     }
 
     @Override

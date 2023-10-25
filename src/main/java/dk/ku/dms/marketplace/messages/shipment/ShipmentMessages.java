@@ -9,6 +9,12 @@ import static dk.ku.dms.marketplace.utils.Constants.messageMapper;
 
 public final class ShipmentMessages {
 
+    public static final Type<GetShipments> GET_SHIPMENTS_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "GetShipments"),
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, GetShipments.class));
+
     public static final Type<PaymentConfirmed> PAYMENT_CONFIRMED_TYPE =
             SimpleType.simpleImmutableTypeFrom(
                     TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "PaymentConfirmed"),

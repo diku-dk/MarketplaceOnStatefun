@@ -2,9 +2,9 @@ package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.entities.CartItem;
-import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.functions.CartFn;
 import dk.ku.dms.marketplace.messages.cart.CartMessages;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.cart.GetCart;
 import dk.ku.dms.marketplace.messages.order.CheckoutRequest;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
@@ -31,7 +31,7 @@ public class CartTest {
         TestContext context = TestContext.forTarget(self);
 
         // set initial state
-        context.storage().set(CartFn.CART_STATE,new CartState());
+        context.storage().set(CartFn.CART_STATE,CartState.build());
 
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "0");
 
@@ -58,7 +58,7 @@ public class CartTest {
         TestContext context = TestContext.forTarget(self);
 
         // set initial state
-        context.storage().set(CartFn.CART_STATE,new CartState());
+        context.storage().set(CartFn.CART_STATE,CartState.build());
 
         // Actions
         CartFn function = new CartFn();
@@ -104,7 +104,7 @@ public class CartTest {
         TestContext context = TestContext.forTarget(self);
 
         // set initial state
-        context.storage().set(CartFn.CART_STATE,new CartState());
+        context.storage().set(CartFn.CART_STATE,CartState.build());
 
         // Actions
         CartFn function = new CartFn();

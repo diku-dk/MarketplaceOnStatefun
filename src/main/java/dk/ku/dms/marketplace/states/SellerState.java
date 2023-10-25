@@ -28,8 +28,16 @@ public final class SellerState {
     private final Map<String, List<OrderEntry>> orderEntries;
 
     @JsonCreator
-    public SellerState() {
+    public SellerState(@JsonProperty("orderEntries") Map<String, List<OrderEntry>> orderEntries) {
+        this.orderEntries = orderEntries;
+    }
+
+    private SellerState() {
         this.orderEntries = new HashMap<>();
+    }
+
+    public static SellerState build() {
+        return new SellerState();
     }
 
     @JsonIgnore

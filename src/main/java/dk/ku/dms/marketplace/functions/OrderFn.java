@@ -84,7 +84,7 @@ public final class OrderFn implements StatefulFunction {
     }
 
     private OrderState getOrderState(Context context) {
-        return context.storage().get(ORDER_STATE).orElse(new OrderState());
+        return context.storage().get(ORDER_STATE).orElse(OrderState.build());
     }
 
     private int generateNextOrderId(Context context) {
@@ -95,7 +95,7 @@ public final class OrderFn implements StatefulFunction {
     }
 
 //    ====================================================================================
-//    Attemp/Confirm/Cance  Reservation (two steps business logic)【send message to stock】
+//    Attempt/Confirm/Cancel  Reservation (two steps business logic)【send message to stock】
 //    ====================================================================================
 
     private void onCheckoutRequest(Context context, Message message) {
@@ -114,7 +114,7 @@ public final class OrderFn implements StatefulFunction {
         int idx = 0;
         for (CartItem item : checkoutRequest.getItems()) {
             AttemptReservationEvent attemptReservationEvent = new AttemptReservationEvent(orderId, item, idx);
-            String id = String.valueOf(item.getSellerId())+'/'+item.getProductId();
+            String id = String.valueOf(item.getSellerId())+'-'+item.getProductId();
             Message attemptReservationMsg =
                     MessageBuilder.forAddress(StockFn.TYPE, id)
                             .withCustomType(StockMessages.ATTEMPT_RESERVATION_TYPE, attemptReservationEvent)
@@ -154,6 +154,9 @@ public final class OrderFn implements StatefulFunction {
             // only proceed if at least one item has been reserved
             if(orderState.inStockItems.containsKey(orderId)) {
                 this.generateOrder(context, checkoutRequest, orderState, orderId);
+
+                // storing customer checkout is no longer necessary
+                orderState.getCheckouts().remove(orderId);
             } else {
                 // otherwise clean state for this order id
                 orderState.cleanState(orderId);
@@ -305,7 +308,7 @@ public final class OrderFn implements StatefulFunction {
 
         if (order == null) {
             String str = "Order " + orderId +
-                    " cannot be found to update to status ";
+                    " cannot be found to update to status in function "+context.self().id()+". Current state size is "+orderState.getOrders().size();
             throw new RuntimeException(str);
         }
 

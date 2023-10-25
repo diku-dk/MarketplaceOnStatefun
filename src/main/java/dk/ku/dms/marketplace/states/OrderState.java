@@ -47,13 +47,31 @@ public final class OrderState {
     public final Map<Integer, List<Integer>> inStockItems;
 
     @JsonCreator
-    public OrderState() {
+    public OrderState(@JsonProperty("checkouts") Map<Integer, CheckoutRequest> checkouts,
+                      @JsonProperty("orders") Map<Integer, Order> orders,
+                      @JsonProperty("orderItems") Map<Integer, List<OrderItem>> orderItems,
+                      @JsonProperty("orderHistory") Map<Integer, List<OrderHistory>> orderHistory,
+                      @JsonProperty("remainingAcksMap") Map<Integer, Integer> remainingAcksMap,
+                      @JsonProperty("inStockItems") Map<Integer, List<Integer>> inStockItems) {
+        this.checkouts = checkouts;
+        this.orders = orders;
+        this.orderItems = orderItems;
+        this.orderHistory = orderHistory;
+        this.remainingAcksMap = remainingAcksMap;
+        this.inStockItems = inStockItems;
+    }
+
+    private OrderState(){
         this.checkouts = new HashMap<>();
         this.orders = new HashMap<>();
         this.orderItems = new HashMap<>();
         this.orderHistory = new HashMap<>();
         this.remainingAcksMap = new HashMap<>();
         this.inStockItems = new HashMap<>();
+    }
+
+    public static OrderState build(){
+        return new OrderState();
     }
 
     @JsonIgnore
@@ -75,11 +93,10 @@ public final class OrderState {
     public Map<Integer, List<OrderHistory>> getOrderHistory() {
         return orderHistory;
     }
-    
-    @JsonIgnore
+
     public void addOrder(int orderId, Order order, List<OrderItem> items, OrderHistory orderHistory) {
-    	orders.put(orderId, order);
-    	orderItems.put(orderId, items);
+    	this.orders.put(orderId, order);
+    	this.orderItems.put(orderId, items);
     	
     	List<OrderHistory> history = new ArrayList<>();
     	if (this.orderHistory.containsKey(orderId)) history = this.orderHistory.get(orderId);
@@ -96,6 +113,7 @@ public final class OrderState {
         this.remainingAcksMap.remove(orderId);
     }
 
+    @JsonIgnore
     public int decreaseRemainingItems(int orderId){
         return this.remainingAcksMap.computeIfPresent(orderId, (k, v)-> v-1);
     }

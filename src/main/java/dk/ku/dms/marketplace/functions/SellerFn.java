@@ -59,7 +59,6 @@ public final class SellerFn implements StatefulFunction {
 
 //    private static Connection conn;
 
-
 //    static {
 //        try {
 //            conn = PostgreHelper.getConnection();
@@ -105,7 +104,7 @@ public final class SellerFn implements StatefulFunction {
     }
 
     private SellerState getSellerState(Context context) {
-        return context.storage().get(SELLER_STATE).orElse(new SellerState());
+        return context.storage().get(SELLER_STATE).orElse(SellerState.build());
     }
 
     private void onSetSeller(Context context, Message message) {

@@ -1,6 +1,7 @@
 package dk.ku.dms.marketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -71,27 +72,52 @@ public final class Shipment {
         this.state = state;
     }
 
+    @JsonIgnore
     public int getShipmentId() {
         return shipmentId;
     }
 
+    @JsonIgnore
     public int getPackageCount() {
         return packageCount;
     }
 
+    @JsonIgnore
     public Enums.ShipmentStatus getStatus() {
         return this.status;
     }
 
+    @JsonIgnore
     public void setStatus(Enums.ShipmentStatus status) {
         this.status = status;
     }
 
+    @JsonIgnore
     public int getOrderId() {
         return orderId;
     }
 
+    @JsonIgnore
     public int getCustomerId() {
         return customerId;
+    }
+
+    @Override
+    public String toString() {
+        return "Shipment{" +
+                "shipmentId=" + shipmentId +
+                ", orderId=" + orderId +
+                ", customerId=" + customerId +
+                ", packageCount=" + packageCount +
+                ", totalFreight=" + totalFreight +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", street='" + street + '\'' +
+                ", zipCode='" + zipCode + '\'' +
+                ", status=" + status +
+                ", city='" + city + '\'' +
+                ", state='" + state + '\'' +
+                ", requestDate=" + requestDate +
+                '}';
     }
 }

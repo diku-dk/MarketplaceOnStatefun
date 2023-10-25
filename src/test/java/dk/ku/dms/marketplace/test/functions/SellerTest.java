@@ -1,13 +1,13 @@
 package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.entities.OrderEntry;
 import dk.ku.dms.marketplace.entities.OrderItem;
-import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.functions.OrderFn;
 import dk.ku.dms.marketplace.functions.SellerFn;
 import dk.ku.dms.marketplace.functions.ShipmentFn;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
@@ -40,7 +40,7 @@ public final class SellerTest {
 
         TestContext context = TestContext.forTargetWithCaller(self, orderAddress);
 
-        SellerState sellerState = new SellerState();
+        SellerState sellerState = SellerState.build();
 
         // set initial state
         context.storage().set(SellerFn.SELLER_STATE, sellerState);
@@ -82,7 +82,7 @@ public final class SellerTest {
 
         TestContext context = TestContext.forTarget(self);
 
-        SellerState sellerState = new SellerState();
+        SellerState sellerState = SellerState.build();
         List<OrderEntry> entries = new ArrayList<>();
 
         entries.add(new OrderEntry(1, 1, 1,
@@ -125,7 +125,7 @@ public final class SellerTest {
 
         TestContext context = TestContext.forTargetWithCaller(self, shipmentAddress);
 
-        SellerState sellerState = new SellerState();
+        SellerState sellerState = SellerState.build();
         List<OrderEntry> entries = new ArrayList<>();
 
         entries.add(new OrderEntry(1, 1, 1,

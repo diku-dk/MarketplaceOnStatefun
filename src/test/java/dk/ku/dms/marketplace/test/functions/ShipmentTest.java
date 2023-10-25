@@ -2,8 +2,9 @@ package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.egress.TransactionMark;
+import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.Package;
-import dk.ku.dms.marketplace.entities.*;
+import dk.ku.dms.marketplace.entities.Shipment;
 import dk.ku.dms.marketplace.functions.ShipmentFn;
 import dk.ku.dms.marketplace.functions.ShipmentProxyFn;
 import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
@@ -91,7 +92,7 @@ public class ShipmentTest {
 
         TestContext context = TestContext.forTargetWithCaller(self, caller);
 
-        ShipmentState shipmentState = new ShipmentState();
+        ShipmentState shipmentState = ShipmentState.build();
 
         Shipment shipment = new Shipment(1, 1, 1, 1, 1, LocalDateTime.now(),
                 Enums.ShipmentStatus.APPROVED, "test", "test", "test", "test", "test", "test" );
@@ -162,7 +163,7 @@ public class ShipmentTest {
 
         TestContext context = TestContext.forTarget(self);
 
-        ShipmentProxyState state = new ShipmentProxyState();
+        ShipmentProxyState state = ShipmentProxyState.build();
         state.tidList.put("1", 1);
 
         // set initial state

@@ -1,9 +1,9 @@
 package dk.ku.dms.marketplace.functions;
 
-import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.OrderPayment;
 import dk.ku.dms.marketplace.entities.OrderPaymentCard;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.customer.CustomerMessages;
 import dk.ku.dms.marketplace.messages.customer.NotifyCustomer;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
@@ -124,7 +124,7 @@ public final class PaymentFn implements StatefulFunction {
         // send message to stock
         for (OrderItem item : invoiceIssued.getItems()) {
             Message paymentStockMsg =
-                    MessageBuilder.forAddress(StockFn.TYPE, String.valueOf(item.getSellerId())+'/'+item.getProductId())
+                    MessageBuilder.forAddress(StockFn.TYPE, String.valueOf(item.getSellerId())+'-'+item.getProductId())
                             .withCustomType(StockMessages.PAYMENT_STOCK_EVENT_TYPE, new PaymentStockEvent(item.getQuantity(), Enums.PaymentStatus.succeeded))
                             .build();
             context.send(paymentStockMsg);

@@ -1,5 +1,6 @@
 package dk.ku.dms.marketplace.states;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -49,11 +50,24 @@ public final class CartState {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     private LocalDateTime updatedAt;
 
-    public CartState() {
+    @JsonCreator
+    public CartState(@JsonProperty("status") Status status, @JsonProperty("items") List<CartItem> items,
+                     @JsonProperty("createdAt") LocalDateTime createdAt, @JsonProperty("updateAt") LocalDateTime updatedAt) {
+        this.status = status;
+        this.items = items;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    private CartState() {
         this.status = Status.OPEN;
         this.items = new ArrayList<>();
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public static CartState build(){
+        return new CartState();
     }
 
     public void seal() {

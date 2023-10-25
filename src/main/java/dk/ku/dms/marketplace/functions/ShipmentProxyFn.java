@@ -56,7 +56,7 @@ public final class ShipmentProxyFn implements StatefulFunction {
     private void onUpdateShipments(Context context, Message message) {
         UpdateShipment updateShipment = message.as(ShipmentMessages.UPDATE_SHIPMENT_TYPE);
         String tid = updateShipment.getTid();
-        ShipmentProxyState shipmentProxyState = context.storage().get(PROXY_STATE).orElse(new ShipmentProxyState());
+        ShipmentProxyState shipmentProxyState = context.storage().get(PROXY_STATE).orElse(ShipmentProxyState.build());
 
         int partitionNum = Constants.nShipmentPartitions;
         shipmentProxyState.tidList.put(tid, partitionNum);

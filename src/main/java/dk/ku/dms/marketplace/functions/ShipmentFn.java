@@ -2,18 +2,15 @@ package dk.ku.dms.marketplace.functions;
 
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.Package;
 import dk.ku.dms.marketplace.entities.Shipment;
-import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.seller.DeliveryNotification;
 import dk.ku.dms.marketplace.messages.seller.SellerMessages;
-import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
-import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
-import dk.ku.dms.marketplace.messages.shipment.UpdateShipment;
-import dk.ku.dms.marketplace.messages.shipment.UpdateShipmentAck;
+import dk.ku.dms.marketplace.messages.shipment.*;
 import dk.ku.dms.marketplace.states.ShipmentState;
 import dk.ku.dms.marketplace.utils.Enums;
 import org.apache.flink.statefun.sdk.java.*;
@@ -41,7 +38,7 @@ public final class ShipmentFn implements StatefulFunction {
     public static final ValueSpec<ShipmentState> SHIPMENT_STATE = ValueSpec.named("shipmentState").withCustomType(ShipmentState.TYPE);
 
     public static final StatefulFunctionSpec SPEC = StatefulFunctionSpec.builder(TYPE)
-            .withValueSpec(SHIPMENT_STATE)
+            .withValueSpecs(SHIPMENT_STATE, NEXT_SHIPMENT_ID_STATE)
             .withSupplier(ShipmentFn::new)
             .build();
 
@@ -68,6 +65,9 @@ public final class ShipmentFn implements StatefulFunction {
             else if (message.is(ShipmentMessages.UPDATE_SHIPMENT_TYPE)) {
                 onUpdateShipment(context, message);
             }
+            else if(message.is(ShipmentMessages.GET_SHIPMENTS_TYPE)){
+                onGetShipments(context,message);
+            }
             else {
                 LOG.error("Message unknown: "+message);
             }
@@ -84,7 +84,25 @@ public final class ShipmentFn implements StatefulFunction {
     }
 
     private ShipmentState getShipmentState(Context context) {
-        return context.storage().get(SHIPMENT_STATE).orElse(new ShipmentState());
+        return context.storage().get(SHIPMENT_STATE).orElse(ShipmentState.build());
+    }
+
+    private void onGetShipments(Context context, Message message) {
+        GetShipments msg = message.as(ShipmentMessages.GET_SHIPMENTS_TYPE);
+        ShipmentState state = getShipmentState(context);
+        List<Shipment> shipments = state.getShipments().values().stream().filter(shipment -> shipment.getCustomerId() == msg.getCustomerId()).collect(Collectors.toList());
+
+        StringBuilder b = new StringBuilder();
+        shipments.forEach(b::append);
+
+        final EgressMessage egressMessage =
+                EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                        .withCustomType(
+                                Messages.EGRESS_RECORD_JSON_TYPE,
+                                new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, b.toString()))
+                        .build();
+
+        context.send(egressMessage);
     }
 
     private void onProcessShipment(Context context, Message message) {
@@ -150,7 +168,7 @@ public final class ShipmentFn implements StatefulFunction {
         }
 
         Message shipmentOrderMsg =
-                MessageBuilder.forAddress(OrderFn.TYPE, context.self().id())
+                MessageBuilder.forAddress(OrderFn.TYPE, String.valueOf(paymentConfirmed.getCustomerCheckout().getCustomerId()))
                         .withCustomType(OrderMessages.SHIPMENT_NOTIFICATION_TYPE,
                                 shipmentNotification)
                         .build();

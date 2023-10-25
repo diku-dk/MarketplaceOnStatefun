@@ -2,8 +2,8 @@ package dk.ku.dms.marketplace.functions;
 
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.entities.Product;
 import dk.ku.dms.marketplace.egress.TransactionMark;
+import dk.ku.dms.marketplace.entities.Product;
 import dk.ku.dms.marketplace.messages.product.ProductMessages;
 import dk.ku.dms.marketplace.messages.product.UpdatePrice;
 import dk.ku.dms.marketplace.messages.stock.ProductUpdatedEvent;
@@ -91,7 +91,7 @@ public final class ProductFn implements StatefulFunction {
 
             context.storage().set(PRODUCT_STATE, product);
 
-            String id = product.getSellerId() + "/" + product.getProductId();
+            String id = product.getSellerId() + "-" + product.getProductId();
 
             ProductUpdatedEvent productUpdated =
                     new ProductUpdatedEvent(product.getSellerId(), product.getProductId(), product.getVersion());

@@ -1,10 +1,10 @@
 package dk.ku.dms.marketplace.test.functions;
 
 import dk.ku.dms.marketplace.entities.CartItem;
-import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.entities.Order;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.functions.*;
+import dk.ku.dms.marketplace.messages.cart.CustomerCheckout;
 import dk.ku.dms.marketplace.messages.order.*;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
@@ -72,7 +72,7 @@ public class OrderTest {
 
         TestContext context = TestContext.forTargetWithCaller(orderAddress, stockAddress);
 
-        OrderState orderState = new OrderState();
+        OrderState orderState = OrderState.build();
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "0");
 
         CustomerCheckout customerCheckout = new CustomerCheckout(1, "test","test","test","test","test",
@@ -120,7 +120,7 @@ public class OrderTest {
 
         TestContext context = TestContext.forTargetWithCaller(orderAddress, stockAddress);
 
-        OrderState orderState = new OrderState();
+        OrderState orderState = OrderState.build();
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "0");
 
         CustomerCheckout customerCheckout = new CustomerCheckout(1, "test","test","test","test","test",
@@ -165,7 +165,7 @@ public class OrderTest {
 
         TestContext context = TestContext.forTargetWithCaller(orderAddress, paymentAddress);
 
-        OrderState orderState = new OrderState();
+        OrderState orderState = OrderState.build();
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "0");
 
         CustomerCheckout customerCheckout = new CustomerCheckout(1, "test","test","test","test","test",
@@ -219,7 +219,7 @@ public class OrderTest {
 
         TestContext context = TestContext.forTargetWithCaller(orderAddress, shipmentAddress);
 
-        OrderState orderState = new OrderState();
+        OrderState orderState = OrderState.build();
         CartItem item = new CartItem(1,1, "testProductName", 1, 1, 1, 1, "0");
 
         CustomerCheckout customerCheckout = new CustomerCheckout(1, "test","test","test","test","test",
