@@ -119,5 +119,9 @@ public final class Order {
     public void setDeliveredCustomerDate(LocalDateTime eventDate) {
         this.delivered_customer_date = eventDate;
     }
+    
+    public int getCustomerId() {
+    	return customerId;
+    }
 
 }

@@ -16,6 +16,7 @@ import dk.ku.dms.marketplace.messages.stock.PaymentStockEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
+import dk.ku.dms.marketplace.utils.PostgreHelper;
 import dk.ku.dms.marketplace.utils.Utils;
 import org.apache.flink.statefun.sdk.java.Context;
 import org.apache.flink.statefun.sdk.java.StatefulFunction;
@@ -26,7 +27,13 @@ import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +49,20 @@ public final class PaymentFn implements StatefulFunction {
             .withSupplier(PaymentFn::new)
             .build();
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    private static Connection dbConnection;
+
+    static {
+        try {
+        	dbConnection = PostgreHelper.getConnection();
+            PostgreHelper.initLogTable(dbConnection);
+            System.out.println("Connection to DB established for PaymentFn ...............");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
@@ -120,6 +141,22 @@ public final class PaymentFn implements StatefulFunction {
                 seq++;
             }
         }
+        
+        if (Constants.logging)
+        {
+        	try
+        	{
+        		String funcName = "PaymentFn";
+            	String key = invoiceIssued.getCustomerCheckout().getCustomerId() + "-" + invoiceIssued.getOrderId();
+            	AbstractMap.SimpleEntry<List<OrderPayment>, OrderPaymentCard> info = new AbstractMap.SimpleEntry<>(orderPayments, card);
+            	String value = objectMapper.writeValueAsString(info);
+        		PostgreHelper.log(funcName, key, value);
+        	}
+        	catch (Exception e)
+        	{
+        		System.out.println(e.getMessage() + e.getStackTrace().toString());
+        	}
+        }
 
         // send message to stock
         for (OrderItem item : invoiceIssued.getItems()) {
@@ -169,5 +206,4 @@ public final class PaymentFn implements StatefulFunction {
                         .build();
         context.send(paymentShipmentMsg);
     }
-
 }

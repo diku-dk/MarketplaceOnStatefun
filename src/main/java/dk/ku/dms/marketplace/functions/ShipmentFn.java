@@ -4,6 +4,8 @@ import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.entities.OrderItem;
+import dk.ku.dms.marketplace.entities.OrderPayment;
+import dk.ku.dms.marketplace.entities.OrderPaymentCard;
 import dk.ku.dms.marketplace.entities.Package;
 import dk.ku.dms.marketplace.entities.Shipment;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
@@ -12,7 +14,10 @@ import dk.ku.dms.marketplace.messages.seller.DeliveryNotification;
 import dk.ku.dms.marketplace.messages.seller.SellerMessages;
 import dk.ku.dms.marketplace.messages.shipment.*;
 import dk.ku.dms.marketplace.states.ShipmentState;
+import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
+import dk.ku.dms.marketplace.utils.PostgreHelper;
+
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.EgressMessage;
 import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
@@ -21,7 +26,10 @@ import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,19 +50,7 @@ public final class ShipmentFn implements StatefulFunction {
             .withSupplier(ShipmentFn::new)
             .build();
 
-//    private static Connection conn;
-//
-//    private final ObjectMapper objectMapper = new ObjectMapper();
-//
-//    static {
-//        try {
-//            conn = PostgreHelper.getConnection();
-//            PostgreHelper.initLogTable(conn);
-//            System.out.println("Connection established for ShipmentFn ...............");
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
+      private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
@@ -293,19 +289,25 @@ public final class ShipmentFn implements StatefulFunction {
                             .build();
             context.send(shipmentNotificationMsg);
 
+            if (Constants.logging)
+            {
+            	try
+            	{
+            		String funcName = "ShipmentFn";
+                	String key = shipment.getCustomerId() + "-" + shipment.getOrderId();
+                	AbstractMap.SimpleEntry<Shipment, List<Package>> info = new AbstractMap.SimpleEntry<>(shipment, shipmentState.getPackages(shipmentId));
+                	String value = objectMapper.writeValueAsString(info);
+            		PostgreHelper.log(funcName, key, value);
+            	}
+            	catch (Exception e)
+            	{
+            		System.out.println(e.getMessage() + e.getStackTrace().toString());
+            	}
+            }
+            
             // clean state
             shipmentState.getShipments().remove(shipmentId);
             shipmentState.getPackages().remove(shipmentId);
-
-//            //  todo
-//            String type = "ShipmentFn";
-//            String id_ = String.valueOf(shipment.getShipmentId());
-//            String orderJson = objectMapper.writeValueAsString(shipment);
-//
-//            Statement st = conn.createStatement();
-//            String sql = String.format("INSERT INTO public.log (\"type\",\"key\",\"value\") VALUES ('%s', '%s', '%s')", type, id_, orderJson);
-//            st.execute(sql);
-
         }
     }
 }

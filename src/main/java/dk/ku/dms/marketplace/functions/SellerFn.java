@@ -16,6 +16,8 @@ import dk.ku.dms.marketplace.messages.seller.SellerMessages;
 import dk.ku.dms.marketplace.states.SellerState;
 import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
+import dk.ku.dms.marketplace.utils.PostgreHelper;
+
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.EgressMessage;
 import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
@@ -55,20 +57,9 @@ public final class SellerFn implements StatefulFunction {
             .withValueSpecs(SELLER_ENTITY_STATE, SELLER_STATE)
             .withSupplier(SellerFn::new)
             .build();
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-//    private static Connection conn;
-
-//    static {
-//        try {
-//            conn = PostgreHelper.getConnection();
-//            PostgreHelper.initLogTable(conn);
-//            System.out.println("Connection established for SellerFn ...............");
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
+    
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
@@ -237,9 +228,27 @@ public final class SellerFn implements StatefulFunction {
                 entry.setDeliveryStatus(Enums.PackageStatus.shipped);
             } else if (shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.CONCLUDED) {
                 entry.setOrderStatus(Enums.OrderStatus.DELIVERED);
-                // TODO log
-                sellerState.getOrderEntries().remove(id);
             }
+        }
+        
+        if (shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.CONCLUDED)
+        {
+        	if (Constants.logging)
+            {
+            	try
+            	{
+            		String funcName = "SellerFn";
+                	String key = id;
+                	String value = objectMapper.writeValueAsString(entries);
+            		PostgreHelper.log(funcName, key, value);
+            	}
+            	catch (Exception e)
+            	{
+            		System.out.println(e.getMessage() + e.getStackTrace().toString());
+            	}
+            }
+        	
+        	sellerState.getOrderEntries().remove(id);
         }
 
         context.storage().set(SELLER_STATE, sellerState);

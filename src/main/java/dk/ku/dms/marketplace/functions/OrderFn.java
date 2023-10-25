@@ -11,7 +11,9 @@ import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
 import dk.ku.dms.marketplace.messages.stock.AttemptReservationEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.states.OrderState;
+import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
+import dk.ku.dms.marketplace.utils.PostgreHelper;
 import dk.ku.dms.marketplace.utils.Enums.OrderStatus;
 import dk.ku.dms.marketplace.utils.Utils;
 import org.apache.flink.statefun.sdk.java.*;
@@ -21,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -42,20 +46,8 @@ public final class OrderFn implements StatefulFunction {
             .withSupplier(OrderFn::new)
             .build();
 
-    private static Connection conn;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-//    static {
-//        try {
-//            conn = PostgreHelper.getConnection();
-//            PostgreHelper.initLogTable(conn);
-//            System.out.println("Connection established for OrderFn ...............");
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
+    
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
@@ -333,22 +325,27 @@ public final class OrderFn implements StatefulFunction {
 
         if (status == Enums.OrderStatus.DELIVERED) {
             order.setDeliveredCustomerDate(shipmentNotification.getEventDate());
-
-//            Order order = orders.get(orderId);
-//            // log delivered entries and remove them from state
-//
-//            String type = "OrderFn";
-//            String id_ = String.valueOf(order.getId());
-//            String orderJson = objectMapper.writeValueAsString(order);
-//
-//            Statement st = conn.createStatement();
-//            String sql = String.format("INSERT INTO public.log (\"type\",\"key\",\"value\") VALUES ('%s', '%s', '%s')", type, id_, orderJson);
-//            st.execute(sql);
-
+            
+            if (Constants.logging)
+            {
+            	try
+            	{
+            		String funcName = "OrderFn";
+                	String key = order.getCustomerId() + "-" + order.getId();
+            		String value = objectMapper.writeValueAsString(order);
+            		PostgreHelper.log(funcName, key, value);
+            	}
+            	catch (Exception e)
+            	{
+            		System.out.println(e.getMessage() + e.getStackTrace().toString());
+            	}
+            }
+            
             orderState.cleanState(orderId);
         }
 
         context.storage().set(ORDER_STATE, orderState);
+        
     }
 
     private void onPaymentNotification(Context context, Message message) {

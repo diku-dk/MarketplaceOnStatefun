@@ -57,6 +57,10 @@ public final class ShipmentState {
     public Map<Integer, List<Package>> getPackages() {
         return packages;
     }
+    
+    public List<Package> getPackages(int shipmentId){
+    	return packages.get(shipmentId);
+    }
 
     @JsonIgnore
     public Map<Integer, Integer> getOldestOpenShipmentPerSeller() {
