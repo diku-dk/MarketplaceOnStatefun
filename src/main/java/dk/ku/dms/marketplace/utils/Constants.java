@@ -13,7 +13,7 @@ public class Constants {
     public static final String TYPES_NAMESPACE = "marketplace";
 
     public static final boolean logging;
-    public static final String connection_string;
+    public static final String connectionString;
     public static final String user;
     public static final String password;
     
@@ -50,15 +50,15 @@ public class Constants {
         }
         
         logging = logging1;
-        connection_string = connection_string1;
+        connectionString = connection_string1;
         user = user1;
         password = password1;
         nShipmentPartitions = nShipmentPartitions1;
         
         System.out.println("NUM_SHIPMENTS: " + nShipmentPartitions);
         System.out.println("logging: " + logging);
-        System.out.println("connection_string: " + connection_string);
+        System.out.println("connection_string: " + connectionString);
         System.out.println("user: " + user);
-        System.out.println("passsword: " + password);
+        System.out.println("password: " + password);
     }
 }

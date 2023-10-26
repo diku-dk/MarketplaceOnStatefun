@@ -1,5 +1,6 @@
 package dk.ku.dms.marketplace.functions;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.entities.OrderPayment;
 import dk.ku.dms.marketplace.entities.OrderPaymentCard;
@@ -16,7 +17,7 @@ import dk.ku.dms.marketplace.messages.stock.PaymentStockEvent;
 import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
-import dk.ku.dms.marketplace.utils.PostgreHelper;
+import dk.ku.dms.marketplace.utils.PostgresHelper;
 import dk.ku.dms.marketplace.utils.Utils;
 import org.apache.flink.statefun.sdk.java.Context;
 import org.apache.flink.statefun.sdk.java.StatefulFunction;
@@ -27,11 +28,6 @@ import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -50,18 +46,6 @@ public final class PaymentFn implements StatefulFunction {
             .build();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
-    private static Connection dbConnection;
-
-    static {
-        try {
-        	dbConnection = PostgreHelper.getConnection();
-            PostgreHelper.initLogTable(dbConnection);
-            System.out.println("Connection to DB established for PaymentFn ...............");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
     
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
@@ -149,8 +133,8 @@ public final class PaymentFn implements StatefulFunction {
         		String funcName = "PaymentFn";
             	String key = invoiceIssued.getCustomerCheckout().getCustomerId() + "-" + invoiceIssued.getOrderId();
             	AbstractMap.SimpleEntry<List<OrderPayment>, OrderPaymentCard> info = new AbstractMap.SimpleEntry<>(orderPayments, card);
-            	String value = objectMapper.writeValueAsString(info);
-        		PostgreHelper.log(funcName, key, value);
+            	String value = this.objectMapper.writeValueAsString(info);
+        		PostgresHelper.log(funcName, key, value);
         	}
         	catch (Exception e)
         	{

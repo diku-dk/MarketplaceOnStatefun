@@ -16,8 +16,7 @@ import dk.ku.dms.marketplace.messages.seller.SellerMessages;
 import dk.ku.dms.marketplace.states.SellerState;
 import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
-import dk.ku.dms.marketplace.utils.PostgreHelper;
-
+import dk.ku.dms.marketplace.utils.PostgresHelper;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.EgressMessage;
 import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
@@ -245,7 +244,7 @@ public final class SellerFn implements StatefulFunction {
             		String funcName = "SellerFn";
                 	String key = id;
                 	String value = objectMapper.writeValueAsString(entries);
-            		PostgreHelper.log(funcName, key, value);
+            		PostgresHelper.log(funcName, key, value);
             	}
             	catch (Exception e)
             	{

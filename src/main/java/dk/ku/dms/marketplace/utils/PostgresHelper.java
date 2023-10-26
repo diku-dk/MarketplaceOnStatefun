@@ -1,55 +1,59 @@
 package dk.ku.dms.marketplace.utils;
 
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Properties;
 
-import javax.sql.*;
+public final class PostgresHelper {
 
-public class PostgreHelper {
+	private static Connection dbConnection;
 
-	static Connection dbConnection;
+    private static DataSource dataSource;
 
     static {
-        try {
-        	dbConnection = PostgreHelper.getConnection();
-            PostgreHelper.initLogTable(dbConnection);
-            System.out.println("Connection to DB established ...............");
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if(Constants.logging) {
+            try {
+                dbConnection = PostgresHelper.getConnection();
+                PostgresHelper.initLogTable(dbConnection);
+                System.out.println("Connection to DB established ...............");
+
+                Properties properties = new Properties();
+                properties.setProperty("user", Constants.user);
+                properties.setProperty("password", Constants.password);
+
+                DriverManagerConnectionFactory connectionFactory = new DriverManagerConnectionFactory(Constants.connectionString, properties);
+
+                PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+
+                GenericObjectPoolConfig<PoolableConnection> config = new GenericObjectPoolConfig<>();
+                config.setMaxTotal(25);
+                config.setMaxIdle(10);
+                config.setMinIdle(5);
+
+                ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, config);
+                poolableConnectionFactory.setPool(connectionPool);
+                dataSource = new PoolingDataSource<>(connectionPool);
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
     
     // https://jdbc.postgresql.org/documentation/datasource/#example111-datasource-code-example
     // https://www.digitalocean.com/community/tutorials/connection-pooling-in-java
     public static Connection getConnection() throws SQLException {
-    	
-    	Properties properties = new Properties();
-		properties.setProperty("user", Constants.user);
-		properties.setProperty("password", Constants.password);
-
-		DriverManagerConnectionFactory connectionFactory = new DriverManagerConnectionFactory(Constants.connection_string, properties);
-
-		PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-
-		GenericObjectPoolConfig<PoolableConnection> config = new GenericObjectPoolConfig<>();
-		config.setMaxTotal(25);
-		config.setMaxIdle(10);
-		config.setMinIdle(5);
-
-		ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, config);
-		poolableConnectionFactory.setPool(connectionPool);
-		DataSource dataSource = new PoolingDataSource<>(connectionPool);
-		
 		return dataSource.getConnection();
     }
 
@@ -76,7 +80,7 @@ public class PostgreHelper {
     	}
     	catch (Exception e)
     	{
-    		System.out.println("Exception happens when writing " + type + " log. " + e.getMessage() + e.getStackTrace().toString());
+    		System.out.println("Exception happens when writing " + type + " log. " + e.getMessage() + Arrays.toString(e.getStackTrace()));
     	}
     }
 

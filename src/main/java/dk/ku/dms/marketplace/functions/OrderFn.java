@@ -3,7 +3,10 @@ package dk.ku.dms.marketplace.functions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
-import dk.ku.dms.marketplace.entities.*;
+import dk.ku.dms.marketplace.entities.CartItem;
+import dk.ku.dms.marketplace.entities.Order;
+import dk.ku.dms.marketplace.entities.OrderHistory;
+import dk.ku.dms.marketplace.entities.OrderItem;
 import dk.ku.dms.marketplace.messages.order.*;
 import dk.ku.dms.marketplace.messages.payment.InvoiceIssued;
 import dk.ku.dms.marketplace.messages.payment.PaymentMessages;
@@ -12,8 +15,8 @@ import dk.ku.dms.marketplace.messages.stock.StockMessages;
 import dk.ku.dms.marketplace.states.OrderState;
 import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
-import dk.ku.dms.marketplace.utils.PostgreHelper;
 import dk.ku.dms.marketplace.utils.Enums.OrderStatus;
+import dk.ku.dms.marketplace.utils.PostgresHelper;
 import dk.ku.dms.marketplace.utils.Utils;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.EgressMessage;
@@ -23,13 +26,9 @@ import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -354,8 +353,8 @@ public final class OrderFn implements StatefulFunction {
             	{
             		String funcName = "OrderFn";
                 	String key = order.getCustomerId() + "-" + order.getId();
-            		String value = objectMapper.writeValueAsString(order);
-            		PostgreHelper.log(funcName, key, value);
+            		String value = this.objectMapper.writeValueAsString(order);
+            		PostgresHelper.log(funcName, key, value);
             	}
             	catch (Exception e)
             	{

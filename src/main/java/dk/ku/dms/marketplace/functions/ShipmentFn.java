@@ -1,23 +1,24 @@
 package dk.ku.dms.marketplace.functions;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
 import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.entities.OrderItem;
-import dk.ku.dms.marketplace.entities.OrderPayment;
-import dk.ku.dms.marketplace.entities.OrderPaymentCard;
 import dk.ku.dms.marketplace.entities.Package;
 import dk.ku.dms.marketplace.entities.Shipment;
 import dk.ku.dms.marketplace.messages.order.OrderMessages;
 import dk.ku.dms.marketplace.messages.order.ShipmentNotification;
 import dk.ku.dms.marketplace.messages.seller.DeliveryNotification;
 import dk.ku.dms.marketplace.messages.seller.SellerMessages;
-import dk.ku.dms.marketplace.messages.shipment.*;
+import dk.ku.dms.marketplace.messages.shipment.GetShipments;
+import dk.ku.dms.marketplace.messages.shipment.PaymentConfirmed;
+import dk.ku.dms.marketplace.messages.shipment.ShipmentMessages;
+import dk.ku.dms.marketplace.messages.shipment.UpdateShipmentAck;
 import dk.ku.dms.marketplace.states.ShipmentState;
 import dk.ku.dms.marketplace.utils.Constants;
 import dk.ku.dms.marketplace.utils.Enums;
-import dk.ku.dms.marketplace.utils.PostgreHelper;
-
+import dk.ku.dms.marketplace.utils.PostgresHelper;
 import org.apache.flink.statefun.sdk.java.*;
 import org.apache.flink.statefun.sdk.java.message.EgressMessage;
 import org.apache.flink.statefun.sdk.java.message.EgressMessageBuilder;
@@ -25,8 +26,6 @@ import org.apache.flink.statefun.sdk.java.message.Message;
 import org.apache.flink.statefun.sdk.java.message.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.AbstractMap;
@@ -297,7 +296,7 @@ public final class ShipmentFn implements StatefulFunction {
                 	String key = shipment.getCustomerId() + "-" + shipment.getOrderId();
                 	AbstractMap.SimpleEntry<Shipment, List<Package>> info = new AbstractMap.SimpleEntry<>(shipment, shipmentState.getPackages(shipmentId));
                 	String value = objectMapper.writeValueAsString(info);
-            		PostgreHelper.log(funcName, key, value);
+            		PostgresHelper.log(funcName, key, value);
             	}
             	catch (Exception e)
             	{
