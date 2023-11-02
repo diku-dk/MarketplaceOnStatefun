@@ -3,6 +3,7 @@ package dk.ku.dms.marketplace.functions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.ku.dms.marketplace.egress.Identifiers;
 import dk.ku.dms.marketplace.egress.Messages;
+import dk.ku.dms.marketplace.egress.TransactionMark;
 import dk.ku.dms.marketplace.entities.CartItem;
 import dk.ku.dms.marketplace.entities.Order;
 import dk.ku.dms.marketplace.entities.OrderHistory;
@@ -172,6 +173,20 @@ public final class OrderFn implements StatefulFunction {
                 orderState.getCheckouts().remove(orderId);
             } else {
                 // otherwise clean state for this order id
+
+                TransactionMark mark = new TransactionMark(checkoutRequest.getCustomerCheckout().getInstanceId(),
+                        Enums.TransactionType.CUSTOMER_SESSION, checkoutRequest.getCustomerCheckout().getCustomerId(),
+                        Enums.MarkStatus.SUCCESS, "order");
+
+                final EgressMessage egressMessage =
+                        EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                                .withCustomType(
+                                        Messages.EGRESS_RECORD_JSON_TYPE,
+                                        new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, mark.toString()))
+                                .build();
+
+                context.send(egressMessage);
+
                 orderState.cleanState(orderId);
             }
         }

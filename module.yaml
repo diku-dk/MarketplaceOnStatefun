@@ -2,6 +2,7 @@ kind: io.statefun.endpoints.v2/http
 spec:
   functions: marketplace/*
   urlPathTemplate: http://marketplace:1108/
+#  urlPathTemplate: http://host.docker.internal:1108/
   transport:
     type: io.statefun.transports.v1/async
 ---
