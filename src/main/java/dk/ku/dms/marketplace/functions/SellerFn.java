@@ -58,7 +58,7 @@ public final class SellerFn implements StatefulFunction {
             .build();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Override
     public CompletableFuture<Void> apply(Context context, Message message) throws Throwable {
         try {
@@ -209,6 +209,13 @@ public final class SellerFn implements StatefulFunction {
         String id = buildUniqueOrderIdentifier(paymentNotification);
 
         List<OrderEntry> entries = sellerState.getOrderEntries().get(id);
+
+        // todo
+        if (entries == null) {
+//            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in payment notification");
+            return;
+        }
+
         for(OrderEntry entry : entries){
             entry.setOrderStatus(Enums.OrderStatus.PAYMENT_PROCESSED);
         }
@@ -222,6 +229,12 @@ public final class SellerFn implements StatefulFunction {
         String id = buildUniqueOrderIdentifier(shipmentNotification);
         List<OrderEntry> entries = sellerState.getOrderEntries().get(id);
 
+        //todo
+        if (entries == null) {
+//            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in ship notification");
+            return;
+        }
+
         for(OrderEntry entry : entries){
             if (shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.APPROVED) {
                 entry.setOrderStatus(Enums.OrderStatus.READY_FOR_SHIPMENT);
@@ -234,7 +247,7 @@ public final class SellerFn implements StatefulFunction {
                 entry.setOrderStatus(Enums.OrderStatus.DELIVERED);
             }
         }
-        
+
         if (shipmentNotification.getShipmentStatus() == Enums.ShipmentStatus.CONCLUDED)
         {
         	if (Constants.logging)
@@ -251,7 +264,7 @@ public final class SellerFn implements StatefulFunction {
             		System.out.println(e.getMessage() + e.getStackTrace().toString());
             	}
             }
-        	
+
         	sellerState.getOrderEntries().remove(id);
         }
 
@@ -262,6 +275,12 @@ public final class SellerFn implements StatefulFunction {
         SellerState sellerState = getSellerState(context);
         DeliveryNotification deliveryNotification = message.as(SellerMessages.DELIVERY_NOTIFICATION_TYPE);
         String id = buildUniqueOrderIdentifier(deliveryNotification);
+
+        // todo
+        if (sellerState.getOrderEntries().get(id) == null) {
+//            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in delievery notification");
+            return;
+        }
 
         Optional<OrderEntry> opEntry = sellerState.getOrderEntries().get(id).stream()
                 .filter(p-> p.getProductId() == deliveryNotification.getProductId()).findFirst();

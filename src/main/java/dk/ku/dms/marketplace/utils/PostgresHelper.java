@@ -37,7 +37,7 @@ public final class PostgresHelper {
                 PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
 
                 GenericObjectPoolConfig<PoolableConnection> config = new GenericObjectPoolConfig<>();
-                config.setMaxTotal(25);
+                config.setMaxTotal(Constants.maxPoolSize);
                 config.setMaxIdle(10);
                 config.setMinIdle(5);
 

@@ -137,10 +137,13 @@ public final class StockFn implements StatefulFunction {
         if (caller.isPresent()) {
             AttemptReservationResponse resp =
                     new AttemptReservationResponse(attemptReservationEvent.getOrderId(), cartItem.getSellerId(), cartItem.getProductId(), status, attemptReservationEvent.getIdx());
-            final Message request = MessageBuilder.forAddress(OrderFn.TYPE, caller.get().id())
-                                                    .withCustomType(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE, resp)
-                                                    .build();
+
+            final Message request = MessageBuilder.forAddress(caller.get())
+                    .withCustomType(OrderMessages.ATTEMPT_RESERVATION_RESPONSE_TYPE, resp)
+                    .build();
+
             context.send(request);
+
         } else {
             LOG.error("Caller unknown");
         }

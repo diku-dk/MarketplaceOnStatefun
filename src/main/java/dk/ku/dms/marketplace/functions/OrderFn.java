@@ -176,7 +176,7 @@ public final class OrderFn implements StatefulFunction {
 
                 TransactionMark mark = new TransactionMark(checkoutRequest.getCustomerCheckout().getInstanceId(),
                         Enums.TransactionType.CUSTOMER_SESSION, checkoutRequest.getCustomerCheckout().getCustomerId(),
-                        Enums.MarkStatus.SUCCESS, "order");
+                        Enums.MarkStatus.NOT_ACCEPTED, "order");
 
                 final EgressMessage egressMessage =
                         EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
