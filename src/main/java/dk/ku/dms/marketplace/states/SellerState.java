@@ -10,9 +10,7 @@ import org.apache.flink.statefun.sdk.java.TypeName;
 import org.apache.flink.statefun.sdk.java.types.SimpleType;
 import org.apache.flink.statefun.sdk.java.types.Type;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class SellerState {
 
@@ -27,13 +25,20 @@ public final class SellerState {
     @JsonProperty("orderEntries")
     private final Map<String, List<OrderEntry>> orderEntries;
 
+    @JsonProperty("messagesReorderError")
+    private final Set<String> messagesReorderError;
+
     @JsonCreator
-    public SellerState(@JsonProperty("orderEntries") Map<String, List<OrderEntry>> orderEntries) {
+    public SellerState(@JsonProperty("orderEntries") Map<String, List<OrderEntry>> orderEntries,
+                          @JsonProperty("messagesReorderError") Set<String> messagesReorderError
+    ) {
         this.orderEntries = orderEntries;
+        this.messagesReorderError = messagesReorderError;
     }
 
     private SellerState() {
         this.orderEntries = new HashMap<>();
+        this.messagesReorderError = new HashSet<>();
     }
 
     public static SellerState build() {
@@ -45,4 +50,8 @@ public final class SellerState {
         return this.orderEntries;
     }
 
+    @JsonIgnore
+    public Set<String> getMessagesReorderError() {
+        return this.messagesReorderError;
+    }
 }

@@ -6,14 +6,14 @@ services:
   #    Functions service
   ###############################################################
 
-  marketplace:
-    build:
-      dockerfile: Dockerfile
-      context: .
-    expose:
-      - "1108"
-    volumes:
-      - ./app.properties:/app.properties
+#  marketplace:
+#    build:
+#      dockerfile: Dockerfile
+#      context: .
+#    expose:
+#      - "1108"
+#    volumes:
+#      - ./app.properties:/app.properties
 
   ###############################################################
   #    StateFun runtime

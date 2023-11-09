@@ -26,10 +26,7 @@ import org.apache.flink.statefun.sdk.java.types.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -82,6 +79,9 @@ public final class SellerFn implements StatefulFunction {
             }
             else if (message.is(SellerMessages.DELIVERY_NOTIFICATION_TYPE)) {
                 onDeliveryNotification(context, message);
+            }
+            else if (message.is(SellerMessages.ERROR_COLLECT_TYPE)) {
+                onErrorCollect(context, message);
             }
             else {
                 LOG.error("Message unknown: "+message);
@@ -213,6 +213,7 @@ public final class SellerFn implements StatefulFunction {
         // todo
         if (entries == null) {
 //            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in payment notification");
+            sellerState.getMessagesReorderError().add(id);
             return;
         }
 
@@ -231,6 +232,7 @@ public final class SellerFn implements StatefulFunction {
 
         //todo
         if (entries == null) {
+            sellerState.getMessagesReorderError().add(id);
 //            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in ship notification");
             return;
         }
@@ -278,6 +280,7 @@ public final class SellerFn implements StatefulFunction {
 
         // todo
         if (sellerState.getOrderEntries().get(id) == null) {
+            sellerState.getMessagesReorderError().add(id);
 //            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in delievery notification");
             return;
         }
@@ -296,4 +299,23 @@ public final class SellerFn implements StatefulFunction {
         context.storage().set(SELLER_STATE, sellerState);
     }
 
+    private void onErrorCollect(Context context, Message message) {
+        SellerState sellerState = getSellerState(context);
+        Set<String> errorSet = sellerState.getMessagesReorderError();
+        int errorCount = errorSet.size();
+        String errorCountStr = String.valueOf(errorCount);
+
+        TransactionMark mark = new TransactionMark("0",
+                Enums.TransactionType.ERROR_COLLECT, Integer.parseInt( context.self().id() ),
+                Enums.MarkStatus.SUCCESS, errorCountStr); // reuse the source field for the error count
+
+        final EgressMessage egressMessage =
+                EgressMessageBuilder.forEgress(Identifiers.RECEIPT_EGRESS)
+                        .withCustomType(
+                                Messages.EGRESS_RECORD_JSON_TYPE,
+                                new Messages.EgressRecord(Identifiers.RECEIPT_TOPICS, mark.toString()))
+                        .build();
+
+        context.send(egressMessage);
+    }
 }

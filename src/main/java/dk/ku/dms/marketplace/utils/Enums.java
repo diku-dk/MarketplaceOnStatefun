@@ -94,5 +94,7 @@ public class Enums {
 
         UPDATE_PRODUCT,
         UPDATE_DELIVERY,
+
+        ERROR_COLLECT
     }
 }

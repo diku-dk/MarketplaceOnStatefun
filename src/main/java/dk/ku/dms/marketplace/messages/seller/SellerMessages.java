@@ -27,4 +27,9 @@ public final class SellerMessages {
                     messageMapper::writeValueAsBytes,
                     bytes -> messageMapper.readValue(bytes, QueryDashboard.class));
 
+    public static final Type<ErrorCollect> ERROR_COLLECT_TYPE =
+            SimpleType.simpleImmutableTypeFrom(
+                    TypeName.typeNameOf(Constants.TYPES_NAMESPACE, "ErrorCollect"),
+                    messageMapper::writeValueAsBytes,
+                    bytes -> messageMapper.readValue(bytes, ErrorCollect.class));
 }
