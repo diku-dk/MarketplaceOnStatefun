@@ -214,6 +214,7 @@ public final class SellerFn implements StatefulFunction {
         if (entries == null) {
 //            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in payment notification");
             sellerState.getMessagesReorderError().add(id);
+            context.storage().set(SELLER_STATE, sellerState);
             return;
         }
 
@@ -233,6 +234,7 @@ public final class SellerFn implements StatefulFunction {
         //todo
         if (entries == null) {
             sellerState.getMessagesReorderError().add(id);
+            context.storage().set(SELLER_STATE, sellerState);
 //            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in ship notification");
             return;
         }
@@ -281,6 +283,7 @@ public final class SellerFn implements StatefulFunction {
         // todo
         if (sellerState.getOrderEntries().get(id) == null) {
             sellerState.getMessagesReorderError().add(id);
+            context.storage().set(SELLER_STATE, sellerState);
 //            LOG.error("SellerFn " + context.self().id() + " orderID: " + id + " not found in delievery notification");
             return;
         }
