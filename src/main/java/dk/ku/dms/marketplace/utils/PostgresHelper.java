@@ -22,12 +22,9 @@ public final class PostgresHelper {
     private static DataSource dataSource;
 
     static {
+
         if(Constants.logging) {
             try {
-                dbConnection = PostgresHelper.getConnection();
-                PostgresHelper.initLogTable(dbConnection);
-                System.out.println("Connection to DB established ...............");
-
                 Properties properties = new Properties();
                 properties.setProperty("user", Constants.user);
                 properties.setProperty("password", Constants.password);
@@ -44,6 +41,10 @@ public final class PostgresHelper {
                 ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, config);
                 poolableConnectionFactory.setPool(connectionPool);
                 dataSource = new PoolingDataSource<>(connectionPool);
+
+                dbConnection = PostgresHelper.getConnection();
+                PostgresHelper.initLogTable(dbConnection);
+                System.out.println("Connection to DB established ...............");
 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -82,6 +83,10 @@ public final class PostgresHelper {
     	{
     		System.out.println("Exception happens when writing " + type + " log. " + e.getMessage() + Arrays.toString(e.getStackTrace()));
     	}
+    }
+
+    public static void init(){
+        System.out.println("Init postgres helper success");
     }
 
 }
