@@ -1,23 +1,19 @@
 # MarketplaceOnStatefun
 
-```
-This is an IN-PROGRESS work. 
-Details about how to appropriately configure, deploy, and execute 
-the application are being added progressively.
-```
-
-MarketplaceOnStatefun is the Statefun port of Marketplace, the application prescribed as part of a microservice-based
-benchmark being designed by the [Data Management Systems (DMS) group](https://di.ku.dk/english/research/sdps/research-groups/dms/) at the University of Copenhagen.
+MarketplaceOnStatefun is the Statefun port of Online Marketplace, the application prescribed as part of a microservice-based
+benchmark of same name being designed by the [Data Management Systems (DMS) group](https://di.ku.dk/english/research/sdps/research-groups/dms/) at the University of Copenhagen.
 Further details about the benchmark can be found [here](https://github.com/diku-dk/EventBenchmark).
 
 ## Table of Contents
 - [Getting Started](#getting-started)
     * [Prerequisites](#prerequisites)
     * [New Statefun Users](#statefun)
-    * [Docker Preliminaries](#docker)
+    * [Docker Basic](#docker-basic)
+    * [Docker Advanced](#docker-advanced)
+- [Online Marketplace](#running-benchmark)
     * [Marketplace APIs](#apis)
     * [Play Around](#play)
-- [Running the Benchmark](#running-benchmark)
+
 
 ## <a name="getting-started"></a>Getting Started
 
@@ -33,9 +29,11 @@ Further details about the benchmark can be found [here](https://github.com/diku-
 [Statefun](https://github.com/apache/flink-statefun) provides a runtime to program functions that necessitate managing state as part of their execution. It is built on top of Apache Flink and inherits all the benefits brought about by the stream processing engine.
 We highly recommend starting from the [Statefun documentation](https://nightlies.apache.org/flink/flink-statefun-docs-master/) and project examples, that can be found in the [Stateful Functions Playground repository](https://github.com/apache/flink-statefun-playground).
 
-### <a name="docker"></a>Docker Preliminaries
+### <a name="docker"></a>Docker basic
 
 This port runs based on the project [Statefun Playground](https://github.com/apache/flink-statefun-playground). This decision is made to facilitate the packaging of dependencies, the deployment scheme, and the submission of workload and collection of performance metrics through HTTP endpoints.
+
+If you are interested on deploying MarketplaceOnStatefun for reproducing an experiment, please refer to the next [block](#docker-advanced).
 
 To get up MarketplaceOnStatefun up and running, run the following commands in the project's root folder:
 
@@ -47,13 +45,37 @@ docker-compose build
 docker-compose up
 ```
 
-The original [statefun-playground](https://hub.docker.com/r/apache/flink-statefun-playground/) Docker image runs with default Flink and JVM parameters, which can lead to performance issues. This way, we suggest advanced users the following:
+### <a name="docker-advanced"></a>Docker Advanced
 
-(a) Generate a custom image from the [source code](https://github.com/apache/flink-statefun-playground/tree/main/playground-internal/statefun-playground-entrypoint) (make sure to at least increase MANAGED_MEMORY_SIZE param in the method createDefaultLocalEnvironmentFlinkConfiguration found in the class LocalEnvironmentEntryPoint.java)
+The original [statefun-playground](https://hub.docker.com/r/apache/flink-statefun-playground/) Docker image runs with default Flink parameters, which can lead to performance issues. To circumvent this shortcoming, we suggest advanced users two options:
+
+(a) Modify Flink configuration and generate a custom image from the [source code](https://github.com/apache/flink-statefun-playground/tree/main/playground-internal/statefun-playground-entrypoint) 
+
+Flink configuration can be modified in the method createDefaultLocalEnvironmentFlinkConfiguration found in the class [LocalEnvironmentEntryPoint](flink-statefun-playground/playground-internal/statefun-playground-entrypoint/src/main/java/org/apache/flink/statefun/playground/internal)
+
+An example configuration is provided below.
+
+```
+final Configuration flinkConfiguration = new Configuration();
+flinkConfiguration.set(StateBackendOptions.STATE_BACKEND, "hashmap");
+flinkConfiguration.set(StateBackendOptions.LATENCY_TRACK_ENABLED, false);
+
+// task slots >= parallelism
+ConfigOption<Integer> NUM_TASK_SLOTS = ConfigOptions.key("taskmanager.numberOfTaskSlots").intType().defaultValue(1);
+flinkConfiguration.set(NUM_TASK_SLOTS, 6);
+
+ConfigOption<Integer> PAR_DEFAULT = ConfigOptions.key("parallelism.default").intType().defaultValue(1);
+flinkConfiguration.set(PAR_DEFAULT, 6);
+
+ConfigOption<Integer> ASYNC_MAX_DEFAULT = ConfigOptions.key("statefun.async.max-per-task").intType().defaultValue(1024);
+flinkConfiguration.set(ASYNC_MAX_DEFAULT, 16000);
+
+return flinkConfiguration;
+```
 
 (b) Overwrite the [Flink parameters](https://github.com/apache/flink-statefun-playground/blob/main/playground-internal/statefun-playground-entrypoint/README.md).
 
-In case you prefer to modify statefun-playground source code, proceed as follows:
+By opting for (a) or (b), then proceed as follows:
 
 In the flink-statefun-playground root's folder, run:
 ```
@@ -70,6 +92,8 @@ docker-compose -f docker-compose-custom.yml up
 ```
 
 After these commands, the application is probably up and running.
+
+## <a name="running-benchmark"></a>Online Marketplace On Statefun
 
 ### <a name="api"></a>Marketplace APIs
 
@@ -96,7 +120,7 @@ If everything worked out, you should see an output like it follows.
 Product{product_id=1, seller_id=1, name='productTest', sku='sku', category='categoryTest', description='descriptionTest', price=10.0, freight_value=0.0, status='approved', version='0', createdAt=2023-10-24T14:46:57.656, updatedAt=2023-10-24T14:46:57.656}
 ```
 
-There are two way we can update a <b>product</b>: updating the price or overwriting a product.
+There are two ways we can update a <b>product</b>: updating the price or overwriting a product.
 
 To submit a <b>price update</b>, a user has to send the following request
 
@@ -236,8 +260,4 @@ After modifying the code, you can perform a hot deploy by running the following 
 docker-compose up -d --build marketplace
 ```
 
-## <a name="getting-started"></a>Running the Benchmark
-
-1. Make sure that MarketplaceOnStatefun is up and running
-2. 
 
