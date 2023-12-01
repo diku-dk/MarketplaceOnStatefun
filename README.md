@@ -1,6 +1,6 @@
 # MarketplaceOnStatefun
 
-MarketplaceOnStatefun is the Statefun port of Online Marketplace, the application prescribed as part of a microservice-based
+MarketplaceOnStatefun is the [Statefun](https://github.com/apache/flink-statefun) port of Online Marketplace, the application prescribed as part of a microservice-based
 benchmark of same name being designed by the [Data Management Systems (DMS) group](https://di.ku.dk/english/research/sdps/research-groups/dms/) at the University of Copenhagen.
 Further details about the benchmark can be found in the benchmark driver [repository](https://github.com/diku-dk/EventBenchmark).
 
@@ -9,10 +9,12 @@ Further details about the benchmark can be found in the benchmark driver [reposi
     * [Prerequisites](#prerequisites)
     * [New Statefun Users](#statefun)
     * [Docker Basic](#docker-basic)
-    * [Docker Advanced](#docker-advanced)
+    * [Docker Advanced](#docker-advanced) 
 - [Online Marketplace](#running-benchmark)
+    * [Configuration](#config)
     * [Marketplace APIs](#apis)
     * [Play Around](#play)
+    * [Testing](#test)
 
 ## <a name="getting-started"></a>Getting Started
 
@@ -92,7 +94,15 @@ docker-compose -f docker-compose-custom.yml up
 
 After these commands, the application is probably up and running.
 
-## <a name="running-benchmark"></a>Online Marketplace On Statefun
+## <a name="running-benchmark"></a>Online Marketplace on Statefun
+
+### <a name="config"></a>Configuration
+
+The file `app.properties` defines entries that refer to configuration parameters. These are loaded dynamically on application startup. The parameters are:
+
+`logging=[true/false]`: Defines whether logging historical records to PostgreSQL is enabled.
+`connection_string`, `user`, and `password`: PostgreSQL connection parameters.
+`num_shipments=[1-N]`: Defines the number of shipment functions.
 
 ### <a name="api"></a>Marketplace APIs
 
@@ -258,3 +268,7 @@ After modifying the code, you can perform a hot deploy by running the following 
 ```
 docker-compose up -d --build marketplace
 ```
+
+### <a name="test"></a>Testing
+
+There is a suite of tests available for checking some Online Marketplace benchmark constraints. The tests can be found in the following path: [link](src/test)
