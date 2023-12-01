@@ -2,7 +2,7 @@
 
 MarketplaceOnStatefun is the Statefun port of Online Marketplace, the application prescribed as part of a microservice-based
 benchmark of same name being designed by the [Data Management Systems (DMS) group](https://di.ku.dk/english/research/sdps/research-groups/dms/) at the University of Copenhagen.
-Further details about the benchmark can be found [here](https://github.com/diku-dk/EventBenchmark).
+Further details about the benchmark can be found in the benchmark driver [repository](https://github.com/diku-dk/EventBenchmark).
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -13,7 +13,6 @@ Further details about the benchmark can be found [here](https://github.com/diku-
 - [Online Marketplace](#running-benchmark)
     * [Marketplace APIs](#apis)
     * [Play Around](#play)
-
 
 ## <a name="getting-started"></a>Getting Started
 
@@ -51,7 +50,7 @@ The original [statefun-playground](https://hub.docker.com/r/apache/flink-statefu
 
 (a) Modify Flink configuration and generate a custom image from the [source code](https://github.com/apache/flink-statefun-playground/tree/main/playground-internal/statefun-playground-entrypoint) 
 
-Flink configuration can be modified in the method createDefaultLocalEnvironmentFlinkConfiguration found in the class [LocalEnvironmentEntryPoint](flink-statefun-playground/playground-internal/statefun-playground-entrypoint/src/main/java/org/apache/flink/statefun/playground/internal)
+Flink configuration can be modified in the method createDefaultLocalEnvironmentFlinkConfiguration found in the class [LocalEnvironmentEntryPoint](https://github.com/apache/flink-statefun-playground/tree/main/playground-internal/statefun-playground-entrypoint/src/main/java/org/apache/flink/statefun/playground/internal/entrypoint)
 
 An example configuration is provided below.
 
@@ -259,5 +258,3 @@ After modifying the code, you can perform a hot deploy by running the following 
 ```
 docker-compose up -d --build marketplace
 ```
-
-
