@@ -64,12 +64,6 @@ public final class PostgresHelper {
         st.close();
     }
 
-    public static void truncateLogTable(Connection conn) throws SQLException {
-        Statement st = conn.createStatement();
-        st.execute("TRUNCATE public.log");
-        st.close();
-    }
-    
     public static void log(String type, String key, String value)
     {
     	try

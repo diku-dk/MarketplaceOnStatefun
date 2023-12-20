@@ -12,29 +12,6 @@ import java.util.Optional;
 
 public class Utils {
 
-    static final TypeName KFK_EGRESS = TypeName.typeNameOf("e-commerce.fns", "kafkaSink");
-
-
-
-    public static <T> void sendMessage(Context context, TypeName addressType, String addressId, Type<T> messageType, T messageContent) {
-        Message msg = MessageBuilder.forAddress(addressType, addressId)
-                .withCustomType(messageType, messageContent)
-                .build();
-        context.send(msg);
-    }
-
-    public static <T> void sendMessageToCaller(Context context, Type<T> messageType, T messageContent) {
-        final Optional<Address> caller = context.caller();
-        if (caller.isPresent()) {
-            context.send(
-                    MessageBuilder.forAddress(caller.get())
-                            .withCustomType(messageType, messageContent)
-                            .build());
-        } else {
-            throw new IllegalStateException("There should always be a caller");
-        }
-    }
-    
     public static String GetInvoiceNumber(int customerId, LocalDateTime timestamp, int orderId)
     {
     	return new StringBuilder()

@@ -118,11 +118,6 @@ public final class OrderState {
         return this.remainingAcksMap.computeIfPresent(orderId, (k, v)-> v-1);
     }
 
-    @JsonIgnore
-    public int getRemainingItems(int orderId){
-        return this.remainingAcksMap.get(orderId);
-    }
-
     public void cleanState(int orderId){
         this.checkouts.remove(orderId);
         this.inStockItems.remove(orderId);

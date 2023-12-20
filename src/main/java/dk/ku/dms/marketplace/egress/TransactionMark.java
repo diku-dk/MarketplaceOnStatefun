@@ -40,20 +40,8 @@ public final class TransactionMark {
         return tid;
     }
 
-    public Enums.TransactionType getType() {
-        return type;
-    }
-
-    public int getActorId() {
-        return actorId;
-    }
-
     public Enums.MarkStatus getStatus() {
         return status;
-    }
-
-    public String getSource() {
-        return source;
     }
 
     @Override

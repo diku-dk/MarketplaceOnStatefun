@@ -81,7 +81,7 @@ public final class SellerFn implements StatefulFunction {
                 onDeliveryNotification(context, message);
             }
             else if (message.is(SellerMessages.ERROR_COLLECT_TYPE)) {
-                onErrorCollect(context, message);
+                onErrorCollect(context);
             }
             else {
                 LOG.error("Message unknown: "+message);
@@ -302,7 +302,7 @@ public final class SellerFn implements StatefulFunction {
         context.storage().set(SELLER_STATE, sellerState);
     }
 
-    private void onErrorCollect(Context context, Message message) {
+    private void onErrorCollect(Context context) {
         SellerState sellerState = getSellerState(context);
         Set<String> errorSet = sellerState.getMessagesReorderError();
         int errorCount = errorSet.size();

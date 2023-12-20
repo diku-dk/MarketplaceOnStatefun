@@ -10,13 +10,6 @@ public class Enums {
         NOT_ACCEPTED
     };
 
-    public enum SendType
-    {
-        ProductFn,
-        StockFn,
-        None
-    }
-
     public enum ItemStatus
     {
         UNAVAILABLE,

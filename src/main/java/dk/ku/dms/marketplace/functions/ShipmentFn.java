@@ -190,7 +190,7 @@ public final class ShipmentFn implements StatefulFunction {
 
         for (Map.Entry<Integer, Integer> kv : q.entrySet()) {
             List<Package> sellerPackages = shipmentState.getShippedPackagesByShipmentIdAndSellerId(kv.getKey(), kv.getValue());
-            updatePackageDelivery(context, shipmentState, sellerPackages, kv.getKey(), kv.getValue());
+            updatePackageDelivery(context, shipmentState, sellerPackages, kv.getValue());
         }
 
         context.storage().set(SHIPMENT_STATE, shipmentState);
@@ -209,7 +209,7 @@ public final class ShipmentFn implements StatefulFunction {
     }
 
     private void updatePackageDelivery(Context context, ShipmentState shipmentState,
-                                       List<Package> sellerPackages, int sellerId, int shipmentId) { // throws SQLException, JsonProcessingException {
+                                       List<Package> sellerPackages, int shipmentId) { // throws SQLException, JsonProcessingException {
 
         Shipment shipment = shipmentState.getShipments().get(shipmentId);
         LocalDateTime now = LocalDateTime.now();
