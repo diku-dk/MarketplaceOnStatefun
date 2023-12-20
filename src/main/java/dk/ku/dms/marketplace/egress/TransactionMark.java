@@ -44,6 +44,18 @@ public final class TransactionMark {
         return status;
     }
 
+    public Enums.TransactionType getType() {
+        return type;
+    }
+
+    public int getActorId() {
+        return actorId;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
     @Override
     public String toString() {
         return "{" +
